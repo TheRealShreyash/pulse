@@ -1,5 +1,54 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap');
 @import 'tailwindcss';
+
+@theme {
+  --color-bg-0: #0e0e0e;
+  --color-bg-1: #161616;
+  --color-bg-2: #1f1f1f;
+  --color-bg-3: #272727;
+
+  --color-ink-1: #e8e8e6;
+  --color-ink-2: #8a8a85;
+  --color-ink-3: #505050;
+
+  --color-green-acc: #4ade80;
+  --color-green-bar: #22c55e;
+  --color-green-dim: rgba(74, 222, 128, 0.12);
+  --color-green-dimhover: rgba(74, 222, 128, 0.18);
+
+  --font-sans: 'Geist', system-ui, sans-serif;
+
+  --animate-blink: blink 1.4s ease-in-out infinite;
+  --animate-fade-in: fadeIn 0.2s ease-out;
+  --animate-slide-up: slideUp 0.25s ease-out;
+
+  @keyframes blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
 
 @layer base {
   *,
@@ -14,11 +63,10 @@
   }
 
   body {
-    background-color: #0e0e0e;
-    color: #e8e8e6;
-    font-family: 'Geist', 'Inter', system-ui, sans-serif;
+    background-color: var(--color-bg-0);
+    color: var(--color-ink-1);
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
 
   ::-webkit-scrollbar {
@@ -36,15 +84,15 @@
   input,
   textarea,
   select {
-    background-color: #1f1f1f;
-    color: #e8e8e6;
+    background-color: var(--color-bg-2);
+    color: var(--color-ink-1);
     border: 1px solid rgba(255, 255, 255, 0.08);
     outline: none;
     font-family: inherit;
   }
   input::placeholder,
   textarea::placeholder {
-    color: #505050;
+    color: var(--color-ink-3);
   }
   input:focus,
   textarea:focus,
@@ -52,12 +100,10 @@
     border-color: rgba(255, 255, 255, 0.2);
   }
   select option {
-    background: #1f1f1f;
+    background: var(--color-bg-2);
   }
 }
 
-@layer utilities {
-  .bar-transition {
-    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
+@utility bar-transition {
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
