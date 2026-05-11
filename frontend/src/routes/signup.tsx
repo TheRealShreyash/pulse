@@ -1,14 +1,14 @@
-// src/routes/login.tsx
+// src/routes/signup.tsx
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/login')({
-  component: LoginPage,
+export const Route = createFileRoute('/signup')({
+  component: SignupPage,
 })
 
-function LoginPage() {
-  function handleLogin() {
-    // TODO: redirect to your Iris OIDC authorization endpoint
-    // window.location.href = `${import.meta.env.VITE_IRIS_URL}/authorize?...`
+function SignupPage() {
+  function handleSignup() {
+    // TODO: redirect to your Iris OIDC registration endpoint
+    // window.location.href = `${import.meta.env.VITE_IRIS_URL}/register?...`
   }
 
   return (
@@ -17,25 +17,22 @@ function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-10">
           <h1 className="text-[22px] font-medium text-ink-1">Pulse</h1>
-          <p className="text-[13px] text-ink-3 mt-1.5">
-            Sign in to your account
-          </p>
+          <p className="text-[13px] text-ink-3 mt-1.5">Create your account</p>
         </div>
 
         {/* Card */}
         <div className="rounded-xl border border-white/8 bg-bg-1 p-8 flex flex-col items-center gap-6">
           <div className="text-center space-y-1">
-            <p className="text-[14px] font-medium text-ink-1">Welcome back</p>
+            <p className="text-[14px] font-medium text-ink-1">Get started</p>
             <p className="text-[12px] text-ink-3">
-              Use your Iris account to continue
+              Use your Iris account to create polls
             </p>
           </div>
 
           <button
-            onClick={handleLogin}
+            onClick={handleSignup}
             className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-lg border border-green-bar/40 bg-green-dim text-green-acc text-[13px] font-medium hover:bg-green-dimhover hover:border-green-bar/60 transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-acc"
           >
-            {/* Iris icon placeholder — swap with your actual Iris logo if available */}
             <svg
               width="16"
               height="16"
@@ -59,18 +56,18 @@ function LoginPage() {
               />
               <circle cx="8" cy="8" r="1.2" fill="currentColor" />
             </svg>
-            Login with Iris
+            Sign up with Iris
           </button>
         </div>
 
         {/* Footer */}
         <p className="text-center text-[11px] text-ink-3 mt-6">
-          Don't have an account?{' '}
+          Already have an account?{' '}
           <a
-            href="/signup"
+            href="/login"
             className="text-ink-2 hover:text-ink-1 transition-colors underline underline-offset-2"
           >
-            Sign up
+            Log in
           </a>
         </p>
       </div>
