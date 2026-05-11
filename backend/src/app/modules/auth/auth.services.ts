@@ -18,3 +18,21 @@ export const callback = async (code: string) => {
 
   return data as { data: Object };
 };
+
+export const refreshTokens = async (refreshToken: string) => {
+  const response = await fetch(`${IRIS_AUTH_URL}/auth/refresh-token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      refreshToken,
+    }),
+  });
+
+  if (!response.ok) throw ApiError.unauthorized("Failed to refresh tokens");
+
+  const { data } = (await response.json()) as {
+    data: { refreshToken: string; accessToken: string };
+  };
+
+  return data;
+};
