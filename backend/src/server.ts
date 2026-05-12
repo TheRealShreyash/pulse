@@ -2,16 +2,17 @@ import http from "node:http";
 import "dotenv/config";
 import { createApplication } from "./app";
 import { setupSocketServer } from "./socket";
+import { PORT } from "./config";
 
 async function main() {
   try {
     const server = http.createServer(createApplication());
     const io = setupSocketServer(server);
 
-    const PORT = process.env.PORT || 8080;
+    const port = PORT || 8080;
 
     server.listen(PORT, () => {
-      console.log(`[HTTP] Server listening at http://localhost:${PORT}`);
+      console.log(`[HTTP] Server listening at http://localhost:${port}`);
     });
   } catch (error) {
     console.log(`Error starting the server: `, error);

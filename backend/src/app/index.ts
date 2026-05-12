@@ -2,7 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRouter from "./modules/auth/auth.routes";
-import { FRONTEND_URL } from "./config";
+import { FRONTEND_URL } from "../config";
 
 export function createApplication() {
   const app = express();

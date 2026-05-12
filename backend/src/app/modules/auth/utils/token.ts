@@ -1,7 +1,7 @@
 import JWT from "jsonwebtoken";
 import JwksClient from "jwks-rsa";
 import type { UserTokenPayload } from "../auth.models";
-import { IRIS_AUTH_URL } from "../../../config";
+import { IRIS_AUTH_URL } from "../../../../config";
 
 const client = JwksClient({
   jwksUri: `${IRIS_AUTH_URL}/auth/certs`,

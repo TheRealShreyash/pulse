@@ -1,5 +1,5 @@
 import { ApiError } from "../../common/utils";
-import { CLIENT_ID, CLIENT_SECRET, IRIS_AUTH_URL } from "../../config";
+import { CLIENT_ID, CLIENT_SECRET, IRIS_AUTH_URL } from "../../../config";
 
 export const callback = async (code: string) => {
   const response = await fetch(`${IRIS_AUTH_URL}/auth/token`, {

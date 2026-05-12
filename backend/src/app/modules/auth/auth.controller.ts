@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { CLIENT_ID, FRONTEND_URL, IRIS_AUTH_URL, NODE_ENV } from "../../config";
+import { CLIENT_ID, FRONTEND_URL, IRIS_AUTH_URL, NODE_ENV } from "../../../config";
 import { ApiError, ApiResponse } from "../../common/utils";
 import { callback, refreshTokens } from "./auth.services";
 
