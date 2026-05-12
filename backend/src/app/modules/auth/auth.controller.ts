@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { CLIENT_ID, FRONTEND_URL, IRIS_AUTH_URL, NODE_ENV } from "../../config";
-import { ApiResponse } from "../../common/utils";
+import { ApiError, ApiResponse } from "../../common/utils";
 import { callback, refreshTokens } from "./auth.services";
 
 export class AuthController {
@@ -8,7 +8,6 @@ export class AuthController {
     try {
       ApiResponse.ok(res, "Me");
     } catch (error) {
-      console.log(error)
       ApiResponse.error(res, error);
     }
   }
@@ -82,6 +81,21 @@ export class AuthController {
       });
 
       ApiResponse.ok(res, "Tokens refreshed successfully");
+    } catch (error) {
+      ApiResponse.error(res, error);
+    }
+  }
+
+  static async handleUserInfo(req: Request, res: Response) {
+    try {
+      const response = await fetch(`${IRIS_AUTH_URL}/auth/userinfo`);
+
+      if (!response.ok) throw ApiError.unauthorized("Unauthorized");
+
+      if (response.ok) {
+        const data = await response.json();
+        ApiResponse.ok(res, "User info fetched successfully", { data });
+      }
     } catch (error) {
       ApiResponse.error(res, error);
     }
