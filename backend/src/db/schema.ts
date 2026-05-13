@@ -33,7 +33,7 @@ export const pollsTable = pgTable("polls", {
   description: varchar("description", { length: 300 }),
   status: pollStatusEnum("status").notNull().default("DRAFT"),
   isAnonymous: boolean("is_anonymous").notNull().default(false),
-  showLiveResults: boolean('show_live_results').notNull().default(true),
+  showLiveResults: boolean("show_live_results").notNull().default(true),
   expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
