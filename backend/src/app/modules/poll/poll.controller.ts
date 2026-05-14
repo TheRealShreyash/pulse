@@ -1,10 +1,11 @@
 import type { Request, Response } from "express";
-import { ApiResponse } from "../../common/utils";
+import { ApiError, ApiResponse } from "../../common/utils";
 import {
   closePoll,
   createPoll,
   getPoll,
   getUserPolls,
+  respond,
   updatePoll,
 } from "./poll.services";
 import type { AuthenticatedRequest } from "../../common/utils/interfaces";
@@ -35,7 +36,7 @@ export default class PollController {
   static async handleGetPoll(req: AuthenticatedRequest, res: Response) {
     try {
       const pollId = req.query.id as string;
-      const pollData = await getPoll(pollId, req.user!.sub);
+      const pollData = await getPoll(pollId, req.user?.sub);
 
       ApiResponse.ok(res, "Found poll", pollData);
     } catch (error) {
@@ -62,6 +63,20 @@ export default class PollController {
 
       const updatedPoll = await closePoll(pollId, creatorId);
       ApiResponse.ok(res, "Poll closed", updatedPoll);
+    } catch (error) {
+      ApiResponse.error(res, error);
+    }
+  }
+
+  static async handleRespond(req: AuthenticatedRequest, res: Response) {
+    try {
+      const payload = req.body;
+      const userId = req.user!.sub;
+      const responded = await respond(req, payload, userId);
+
+      if (!responded) throw ApiError.internalError("Internal server error");
+
+      ApiResponse.ok(res, "Response recorded");
     } catch (error) {
       ApiResponse.error(res, error);
     }

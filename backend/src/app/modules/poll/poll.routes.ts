@@ -1,6 +1,6 @@
 import { Router } from "express";
 import validate from "../../common/middlewares/validate.middleware";
-import { createPollPayloadModel } from "./poll.models";
+import { createPollPayloadModel, responsePayloadModel } from "./poll.models";
 import PollController from "./poll.controller";
 import {
   authenticate,
@@ -43,6 +43,13 @@ pollRouter.patch(
   authenticate(),
   restrictToAuthenticatedUser(),
   PollController.handleClose,
+);
+
+pollRouter.post(
+  "/respond",
+  authenticate(),
+  validate(responsePayloadModel),
+  PollController.handleRespond,
 );
 
 export default pollRouter;

@@ -6,8 +6,10 @@ import {
   usersTable,
   votesTable,
 } from "../../../db/schema";
+import type { Request } from "express";
 import { ApiError } from "../../common/utils";
-import type { CreatePollPayload } from "./poll.models";
+import type { CreatePollPayload, ResponsePayload } from "./poll.models";
+import { getRequestFingerprint } from "./utils/fingerprint";
 
 export const createPoll = async (
   payload: CreatePollPayload,
@@ -57,7 +59,7 @@ export const createPoll = async (
   return poll;
 };
 
-export const getPoll = async (pollId: string, creatorId: string) => {
+export const getPoll = async (pollId: string, userId?: string) => {
   if (!pollId) throw ApiError.badRequest("No poll id provided");
 
   const [poll] = await db
@@ -68,7 +70,9 @@ export const getPoll = async (pollId: string, creatorId: string) => {
 
   if (!poll) throw ApiError.badRequest("Invalid poll id");
 
-  if (poll.creatorId !== creatorId) throw ApiError.forbidden("Access Denied");
+  if (poll.status === "DRAFT" && poll.creatorId !== userId) {
+    throw ApiError.forbidden("You do not have permission to view this draft");
+  }
 
   const options = await db
     .select()
@@ -97,11 +101,6 @@ export const getPoll = async (pollId: string, creatorId: string) => {
 };
 
 export const getUserPolls = async (creatorId: string) => {
-  // const polls = await db
-  //   .select()
-  //   .from(pollsTable)
-  //   .where(eq(pollsTable.creatorId, creatorId));
-
   const polls = await db
     .select({
       id: pollsTable.id,
@@ -147,4 +146,52 @@ export const closePoll = async (pollId: string, creatorId: string) => {
   if (!poll) throw ApiError.notFound("No poll found with that id");
 
   return poll;
+};
+
+export const respond = async (
+  req: Request,
+  payload: ResponsePayload,
+  userId: string | null,
+) => {
+  const { pollId, optionId } = payload;
+  const fingerprint = getRequestFingerprint(req);
+
+  const [poll] = await db
+    .select()
+    .from(pollsTable)
+    .where(eq(pollsTable.id, pollId))
+    .limit(1);
+
+  if (!poll) throw ApiError.badRequest("No poll found");
+  if (poll.status !== "LIVE")
+    throw ApiError.forbidden("This poll is not accepting votes");
+
+  if (!poll.isAnonymous && !userId) {
+    throw ApiError.unauthorized("Sign in required to vote");
+  }
+
+  const existingVote = await db
+    .select()
+    .from(votesTable)
+    .where(
+      and(
+        eq(votesTable.pollId, pollId),
+        userId
+          ? eq(votesTable.userId, userId)
+          : eq(votesTable.fingerprint, fingerprint ?? ""),
+      ),
+    )
+    .limit(1);
+
+  if (existingVote.length > 0) {
+    throw ApiError.badRequest("You have already voted on this poll");
+  }
+
+  await db.insert(votesTable).values({
+    pollId: poll.id,
+    optionId,
+    userId: userId || null, // Can be null for anonymous polls
+    fingerprint: fingerprint || null,
+  });
+  return true;
 };

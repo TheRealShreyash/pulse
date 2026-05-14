@@ -10,4 +10,10 @@ export const createPollPayloadModel = z.object({
   expiresAt: z.iso.datetime().optional().nullable().default(null),
 });
 
+export const responsePayloadModel = z.object({
+  pollId: z.string(),
+  optionId: z.string(),
+});
+
 export type CreatePollPayload = z.infer<typeof createPollPayloadModel>;
+export type ResponsePayload = z.infer<typeof responsePayloadModel>;
