@@ -24,4 +24,25 @@ pollRouter.get(
   PollController.handleGetPoll,
 );
 
+pollRouter.get(
+  "/user-polls",
+  authenticate(),
+  restrictToAuthenticatedUser(),
+  PollController.handleGetUserPolls,
+);
+
+pollRouter.patch(
+  "/publish",
+  authenticate(),
+  restrictToAuthenticatedUser(),
+  PollController.handlePublish,
+);
+
+pollRouter.patch(
+  "/close",
+  authenticate(),
+  restrictToAuthenticatedUser(),
+  PollController.handleClose,
+);
+
 export default pollRouter;

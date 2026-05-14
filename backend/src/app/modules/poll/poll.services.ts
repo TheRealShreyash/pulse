@@ -1,4 +1,4 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { db } from "../../../db";
 import {
   optionsTable,
@@ -83,5 +83,68 @@ export const getPoll = async (pollId: string, creatorId: string) => {
 
   const totalResponses = voteResult[0]?.count ?? 0;
 
-  return { ...poll, options, totalResponses };
+  const velocity = await db
+    .select({
+      hour: sql<string>`date_trunc('hour', ${votesTable.createdAt})::text`,
+      count: sql<number>`cast(count(*) as int)`,
+    })
+    .from(votesTable)
+    .where(eq(votesTable.pollId, poll.id))
+    .groupBy(sql`date_trunc('hour', ${votesTable.createdAt})`)
+    .orderBy(sql`date_trunc('hour', ${votesTable.createdAt})`);
+
+  return { ...poll, options, totalResponses, velocity };
+};
+
+export const getUserPolls = async (creatorId: string) => {
+  // const polls = await db
+  //   .select()
+  //   .from(pollsTable)
+  //   .where(eq(pollsTable.creatorId, creatorId));
+
+  const polls = await db
+    .select({
+      id: pollsTable.id,
+      title: pollsTable.title,
+      description: pollsTable.description,
+      status: pollsTable.status,
+      isAnonymous: pollsTable.isAnonymous,
+      showLiveResults: pollsTable.showLiveResults,
+      expiresAt: pollsTable.expiresAt,
+      createdAt: pollsTable.createdAt,
+      totalResponses: sql<number>`cast(count(${votesTable.id}) as int)`,
+    })
+    .from(pollsTable)
+    .leftJoin(votesTable, eq(pollsTable.id, votesTable.pollId))
+    .where(eq(pollsTable.creatorId, creatorId))
+    .groupBy(pollsTable.id)
+    .orderBy(desc(pollsTable.createdAt));
+
+  if (!polls) throw ApiError.badRequest("No polls found for that user");
+
+  return polls;
+};
+
+export const updatePoll = async (pollId: string, creatorId: string) => {
+  const [poll] = await db
+    .update(pollsTable)
+    .set({ status: "PUBLISHED" })
+    .where(and(eq(pollsTable.id, pollId), eq(pollsTable.creatorId, creatorId)))
+    .returning();
+
+  if (!poll) throw ApiError.notFound("No poll found with that id");
+
+  return poll;
+};
+
+export const closePoll = async (pollId: string, creatorId: string) => {
+  const [poll] = await db
+    .update(pollsTable)
+    .set({ status: "ENDED" })
+    .where(and(eq(pollsTable.id, pollId), eq(pollsTable.creatorId, creatorId)))
+    .returning();
+
+  if (!poll) throw ApiError.notFound("No poll found with that id");
+
+  return poll;
 };
