@@ -58,8 +58,7 @@ export function usePollSocket({
       socket.emit(EVENTS.LEAVE_POLL, { pollId })
       socket.off(EVENTS.VOTE_UPDATE, handleVoteUpdate)
       socket.off(EVENTS.POLL_CLOSED, handlePollClosed)
-      // Disconnect only if nothing else is using the socket
-      // (safe because Socket.IO ref-counts listeners)
+      
       socket.disconnect()
     }
   }, [pollId, enabled])

@@ -10,6 +10,11 @@ interface CreatePollPayload {
   status?: string;
 }
 
+export interface ResponsePayload {
+  pollId: string;
+  optionId: string;
+}
+
 export const createPoll = async (payload: CreatePollPayload): Promise<Poll> => {
   const response = await fetch("/api/poll/create", {
     method: "POST",
@@ -95,5 +100,22 @@ export const getUserPolls = async (): Promise<Poll[]> => {
 
   const { data } = await response.json();
 
+  return data;
+};
+
+export const respondToPoll = async (payload: ResponsePayload) => {
+  const response = await fetch("/api/poll/respond", {
+    credentials: "include",
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.message ?? "Failed to submit vote");
+  }
+
+  const { data } = await response.json();
   return data;
 };

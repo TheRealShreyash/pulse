@@ -1,65 +1,51 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
-import { TopBar } from '#/components/ui/TopBar'
-import { Badge } from '#/components/ui/Badge'
-import { Button } from '#/components/ui/Button'
-import { OptionBar } from '#/components/poll/OptionBar'
-import { LiveDot } from '#/components/poll/LiveDot'
-import { AnalyticsBar } from '#/components/poll/AnalyticsBar'
-import { usePollSocket } from '#/hooks/usePollSocket'
-import { useCountdown } from '#/hooks/useCountdown'
-import type { Poll } from '#/lib/types'
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { TopBar } from "#/components/ui/TopBar";
+import { Badge } from "#/components/ui/Badge";
+import { Button } from "#/components/ui/Button";
+import { OptionBar } from "#/components/poll/OptionBar";
+import { LiveDot } from "#/components/poll/LiveDot";
+import { AnalyticsBar } from "#/components/poll/AnalyticsBar";
+import { usePollSocket } from "#/hooks/usePollSocket";
+import { useCountdown } from "#/hooks/useCountdown";
+import type { PollWithOptions } from "#/lib/types";
+import { getPoll, respondToPoll } from "#/services/poll";
 
-export const Route = createFileRoute('/poll/$pollId')({
+export const Route = createFileRoute("/poll/$pollId")({
+  loader: async ({ params }) => {
+    const data = await getPoll(params.pollId);
+    return data;
+  },
   component: PollPage,
-})
-
-// ── mock (replace with useSuspenseQuery → GET /polls/:id) ────────────────────
-
-const MOCK: Poll = {
-  id: 'p1',
-  title: 'Which frontend framework should we adopt?',
-  status: 'active',
-  isAnonymous: false,
-  showLiveResults: true,
-  requiresAuth: true,
-  options: [
-    { label: 'React', count: 74 },
-    { label: 'Vue', count: 43 },
-    { label: 'Svelte', count: 26 },
-  ],
-  totalResponses: 143,
-  expiresAt: new Date(Date.now() + 1.8 * 3_600_000).toISOString(),
-  createdAt: new Date().toISOString(),
-}
+});
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function calcPcts(counts: number[]): number[] {
-  const total = counts.reduce((a, b) => a + b, 0)
-  if (!total) return counts.map(() => 0)
-  return counts.map((c) => Math.round((c / total) * 100))
+  const total = counts.reduce((a, b) => a + b, 0);
+  if (!total) return counts.map(() => 0);
+  return counts.map((c) => Math.round((c / total) * 100));
 }
 
 // ── page ──────────────────────────────────────────────────────────────────────
 
 function PollPage() {
-  const { pollId } = Route.useParams()
-  // TODO: const { data: poll } = useSuspenseQuery({ queryKey: ['poll', pollId], queryFn: () => api.get(`/polls/${pollId}`) })
+  const { pollId } = Route.useParams();
+  const pollData = Route.useLoaderData();
 
-  const [poll, setPoll] = useState<Poll>(MOCK)
-  const [selected, setSelected] = useState<number | null>(null)
-  const [hasVoted, setHasVoted] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [poll, setPoll] = useState<PollWithOptions>(pollData);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const isActive = poll.status === 'active'
-  const isPublished = poll.status === 'published'
-  const isClosed = poll.status === 'closed'
-  const showBars = hasVoted || isPublished || isClosed
-  const canVote = isActive && !hasVoted && !submitting
-  const countdown = useCountdown(poll.expiresAt)
-  const pcts = calcPcts(poll.options.map((o) => o.count))
+  const isActive = poll.status === "LIVE";
+  const isPublished = poll.status === "PUBLISHED";
+  const isClosed = poll.status === "ENDED";
+  const showBars = hasVoted || isPublished || isClosed;
+  const canVote = isActive && !hasVoted && !submitting;
+  const countdown = useCountdown(poll.expiresAt);
+  const pcts = calcPcts(poll.options.map((o) => o.count));
 
   // ── Socket.IO ───────────────────────────────────────────────────────────────
   usePollSocket({
@@ -70,33 +56,36 @@ function PollPage() {
         ...prev,
         options: prev.options.map((o, i) => ({ ...o, count: counts[i] })),
         totalResponses: total,
-      }))
+      }));
     },
-    onPollClosed: () => setPoll((prev) => ({ ...prev, status: 'closed' })),
-  })
+    onPollClosed: () => setPoll((prev) => ({ ...prev, status: "ENDED" })),
+  });
 
   // ── vote ──────────────────────────────────────────────────────────────────
   async function handleVote() {
-    if (selected === null || !canVote) return
-    setSubmitting(true)
-    setError(null)
+    if (selected === null || !canVote) return;
+    setSubmitting(true);
+    setError(null);
     try {
-      // TODO: await api.post(`/polls/${pollId}/respond`, { optionIndex: selected })
-      await new Promise((r) => setTimeout(r, 400))
-      setHasVoted(true)
+      const optionId = poll.options[selected].id;
+      await respondToPoll({
+        pollId,
+        optionId,
+      });
+      setHasVoted(true);
     } catch {
-      setError('Failed to submit. Please try again.')
+      setError("Failed to submit. Please try again.");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
   // ── published read-only view ──────────────────────────────────────────────
   if (isPublished) {
-    const leadingIdx = pcts.indexOf(Math.max(...pcts))
+    const leadingIdx = pcts.indexOf(Math.max(...pcts));
     return (
       <>
-        <TopBar right={<Badge variant="published" />} />
+        <TopBar right={<Badge variant="PUBLISHED" />} />
         <main className="max-w-lg mx-auto px-4 py-10 animate-slide-up">
           <p className="text-[10px] font-medium text-ink-3 uppercase tracking-widest mb-2">
             Final results
@@ -105,15 +94,15 @@ function PollPage() {
             {poll.title}
           </h1>
           <p className="text-[11px] text-ink-3 mb-7">
-            {poll.totalResponses} responses ·{' '}
-            {poll.isAnonymous ? 'Anonymous' : 'Authenticated'}
+            {poll.totalResponses} responses ·{" "}
+            {poll.isAnonymous ? "Anonymous" : "Authenticated"}
           </p>
 
           {/* Winner callout */}
           <div className="mb-6 px-4 py-3 rounded-lg bg-green-dim border border-green-bar/25">
             <p className="text-[11px] text-ink-3 mb-0.5">Most voted</p>
             <p className="text-[15px] font-medium text-green-acc">
-              {poll.options[leadingIdx].label}
+              {poll.options[leadingIdx].text}
             </p>
             <p className="text-[11px] text-ink-2 mt-0.5">
               {poll.options[leadingIdx].count} votes · {pcts[leadingIdx]}%
@@ -124,7 +113,7 @@ function PollPage() {
             {poll.options.map((opt, i) => (
               <AnalyticsBar
                 key={i}
-                label={opt.label}
+                label={opt.text}
                 count={opt.count}
                 pct={pcts[i]}
                 isLeading={i === leadingIdx}
@@ -133,7 +122,7 @@ function PollPage() {
           </div>
         </main>
       </>
-    )
+    );
   }
 
   // ── active / closed view ──────────────────────────────────────────────────
@@ -158,7 +147,7 @@ function PollPage() {
             </>
           )}
           {isClosed && <span>Poll ended</span>}
-          <span>{poll.isAnonymous ? 'Anonymous' : 'Authenticated'}</span>
+          <span>{poll.isAnonymous ? "Anonymous" : "Authenticated"}</span>
           <span>·</span>
           <span>Single choice</span>
         </div>
@@ -168,13 +157,13 @@ function PollPage() {
           {poll.options.map((opt, i) => (
             <OptionBar
               key={i}
-              label={opt.label}
+              label={opt.text}
               pct={pcts[i]}
               hasVoted={showBars}
               isSelected={selected === i}
               disabled={!canVote}
               onClick={() => {
-                if (canVote) setSelected(i === selected ? null : i)
+                if (canVote) setSelected(i === selected ? null : i);
               }}
             />
           ))}
@@ -189,12 +178,12 @@ function PollPage() {
               disabled={selected === null || submitting}
               onClick={handleVote}
             >
-              {submitting ? 'Submitting…' : 'Submit vote'}
+              {submitting ? "Submitting…" : "Submit vote"}
             </Button>
             {error && (
               <p className="text-[12px] text-red-400 text-center">{error}</p>
             )}
-            {poll.requiresAuth && !poll.isAnonymous && (
+            {poll.isAnonymous && !poll.isAnonymous && (
               <p className="text-[11px] text-ink-3 text-center mt-1">
                 Sign-in required to vote
               </p>
@@ -215,8 +204,8 @@ function PollPage() {
               </p>
             )}
             <p className="text-[12px] text-ink-3 tabular-nums">
-              {poll.totalResponses}{' '}
-              {poll.totalResponses === 1 ? 'response' : 'responses'}
+              {poll.totalResponses}{" "}
+              {poll.totalResponses === 1 ? "response" : "responses"}
             </p>
           </div>
         )}
@@ -232,5 +221,5 @@ function PollPage() {
         )}
       </main>
     </>
-  )
+  );
 }
