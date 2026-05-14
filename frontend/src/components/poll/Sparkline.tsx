@@ -1,20 +1,27 @@
-import { VelocityPoint } from '../../lib/types'
+import type { VelocityPoint } from "#/lib/types";
+
+function formatHour(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const h = Math.floor(diff / 3_600_000);
+  if (h === 0) return "now";
+  return `${h}h ago`;
+}
 
 export function Sparkline({ data }: { data: VelocityPoint[] }) {
-  if (data.length < 2) return null
+  if (data.length < 2) return null;
 
   const W = 300,
     H = 48,
-    pad = 4
-  const max = Math.max(...data.map((d) => d.count), 1)
-  const step = (W - pad * 2) / (data.length - 1)
+    pad = 4;
+  const max = Math.max(...data.map((d) => d.count), 1);
+  const step = (W - pad * 2) / (data.length - 1);
   const pts = data.map((d, i) => ({
     x: pad + i * step,
     y: H - pad - (d.count / max) * (H - pad * 2),
-  }))
+  }));
 
-  const line = pts.map((p) => `${p.x},${p.y}`).join(' ')
-  const area = `${line} ${pts.at(-1)!.x},${H} ${pts[0].x},${H}`
+  const line = pts.map((p) => `${p.x},${p.y}`).join(" ");
+  const area = `${line} ${pts.at(-1)!.x},${H} ${pts[0].x},${H}`;
 
   return (
     <div>
@@ -22,7 +29,7 @@ export function Sparkline({ data }: { data: VelocityPoint[] }) {
         width="100%"
         viewBox={`0 0 ${W} ${H}`}
         aria-hidden="true"
-        style={{ display: 'block' }}
+        style={{ display: "block" }}
       >
         <polyline
           points={area}
@@ -43,10 +50,10 @@ export function Sparkline({ data }: { data: VelocityPoint[] }) {
       <div className="flex justify-between mt-1.5">
         {data.map((v, i) => (
           <span key={i} className="text-[9px] text-ink-3">
-            {v.label}
+            {formatHour(v.hour)}
           </span>
         ))}
       </div>
     </div>
-  )
+  );
 }

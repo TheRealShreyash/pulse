@@ -1,4 +1,3 @@
-// src/components/ui/topbar.tsx
 import { Link } from "@tanstack/react-router";
 import { LiveDot } from "../poll/LiveDot";
 
