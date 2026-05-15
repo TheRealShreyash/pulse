@@ -10,12 +10,12 @@ export const socket = io(
 
 export const EVENTS = {
   // client → server
-  JOIN_POLL: "join_poll",
-  LEAVE_POLL: "leave_poll",
+  JOIN_POLL: "client:poll:join",
+  LEAVE_POLL: "client:poll:leave",
 
   // server → client
-  VOTE_UPDATE: "vote_update",
-  POLL_CLOSED: "poll_closed",
+  VOTE_UPDATE: "server:poll:update",
+  POLL_CLOSED: "server:poll:closed",
 } as const;
 
 export interface JoinPollPayload {
