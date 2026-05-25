@@ -1,18 +1,18 @@
 import { useEffect, useRef } from "react";
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { authenticate } from "#/services/auth";
+import { createFileRoute, Link } from "@tanstack/react-router";
+// import { authenticate } from "#/services/auth";
 
 export const Route = createFileRoute("/")({
-  beforeLoad: async () => {
-    const isAuthenticated = await authenticate();
-    if (isAuthenticated) {
-      throw redirect({
-        to: "/dashboard",
-        replace: true,
-        search: {},
-      });
-    }
-  },
+  // beforeLoad: async () => {
+  //   const isAuthenticated = await authenticate();
+  //   if (isAuthenticated) {
+  //     throw redirect({
+  //       to: "/dashboard",
+  //       replace: true,
+  //       search: {},
+  //     });
+  //   }
+  // },
   component: LandingPage,
 });
 
