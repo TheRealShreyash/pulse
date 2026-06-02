@@ -64,7 +64,7 @@ export class AuthController {
 
       await registerUser(userData);
 
-      res.redirect(FRONTEND_URL);
+      res.redirect(`${FRONTEND_URL}/dashboard`);
     } catch (error) {
       // Instead of this response serve an error file
       ApiResponse.error(res, error);
