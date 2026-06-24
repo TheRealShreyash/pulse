@@ -115,7 +115,7 @@ function AnalyticsPage() {
   return (
     <>
       <TopBar
-        backTo="/"
+        backTo="/dashboard"
         title="Analytics"
         right={
           <div className="flex items-center gap-2">

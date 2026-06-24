@@ -141,7 +141,7 @@ function CreatePoll() {
 
   return (
     <>
-      <TopBar backTo="/" title="New poll" />
+      <TopBar backTo="/dashboard" title="New poll" />
 
       <main className="max-w-xl mx-auto px-4 py-8 animate-slide-up">
         {/* Question */}
