@@ -6,7 +6,7 @@ const envSchema = z.object({
   CLIENT_SECRET: z.string().min(1),
   NODE_ENV: z.enum(["development", "production"]).default("development"),
   FRONTEND_URL: z.url(),
-  PORT: z.number().default(8080),
+  PORT: z.coerce.number().default(8080),
   DATABASE_URL: z.string(),
 });
 
