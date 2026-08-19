@@ -1,23 +1,23 @@
-import { BACKEND_URL } from "#/config";
+// import { BACKEND_URL } from "#/config";
 
 export const redirectToIrisLogin = () => {
-  window.location.href = `${BACKEND_URL}/api/auth/iris-login`;
+  window.location.href = `/api/auth/iris-login`;
 };
 
 export const redirectToIrisSignup = () => {
-  window.location.href = `${BACKEND_URL}/api/auth/iris-signup`;
+  window.location.href = `/api/auth/iris-signup`;
 };
 
 export const authenticate = async () => {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+    const response = await fetch(`/api/auth/me`, {
       credentials: "include",
     });
 
     if (response.ok) return true;
 
     if (response.status === 401) {
-      const refreshRes = await fetch(`${BACKEND_URL}/api/auth/refresh-token`, {
+      const refreshRes = await fetch(`/api/auth/refresh-token`, {
         method: "POST",
         credentials: "include",
       });
@@ -32,7 +32,7 @@ export const authenticate = async () => {
 };
 
 export const getUserInfo = async () => {
-  const response = await fetch(`${BACKEND_URL}/api/auth/userinfo`, {
+  const response = await fetch(`/api/auth/userinfo`, {
     credentials: "include",
     method: "POST",
   });
