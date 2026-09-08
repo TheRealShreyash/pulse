@@ -22,13 +22,13 @@ class ApiResponse {
     if (error instanceof ApiError) {
       return res.status(error.statusCode).json({
         success: false,
-        error: error.message,
+        message: error.message,
       });
     }
     console.log(`[ Res | Err ] ${error}`);
     return res.status(500).json({
       success: false,
-      error: "Internal server error",
+      message: "Internal server error",
     });
   }
 }

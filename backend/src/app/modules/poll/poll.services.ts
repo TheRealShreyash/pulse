@@ -75,35 +75,37 @@ export const getPoll = async (pollId: string, userId?: string) => {
     throw ApiError.forbidden("You do not have permission to view this draft");
   }
 
-  const options = await db
-    .select({
-      id: optionsTable.id,
-      text: optionsTable.text,
-      displayOrder: optionsTable.displayOrder,
-      count: sql<number>`cast(count(${votesTable.id}) as int)`,
-    })
-    .from(optionsTable)
-    .leftJoin(votesTable, eq(votesTable.optionId, optionsTable.id))
-    .where(eq(optionsTable.pollId, poll.id))
-    .groupBy(optionsTable.id)
-    .orderBy(asc(optionsTable.displayOrder));
+  const [options, voteResult, velocity] = await Promise.all([
+    db
+      .select({
+        id: optionsTable.id,
+        text: optionsTable.text,
+        displayOrder: optionsTable.displayOrder,
+        count: sql<number>`cast(count(${votesTable.id}) as int)`,
+      })
+      .from(optionsTable)
+      .leftJoin(votesTable, eq(votesTable.optionId, optionsTable.id))
+      .where(eq(optionsTable.pollId, poll.id))
+      .groupBy(optionsTable.id)
+      .orderBy(asc(optionsTable.displayOrder)),
 
-  const voteResult = await db
-    .select({ count: sql<number>`cast(count(*) as int)` })
-    .from(votesTable)
-    .where(eq(votesTable.pollId, poll.id));
+    db
+      .select({ count: sql<number>`cast(count(*) as int)` })
+      .from(votesTable)
+      .where(eq(votesTable.pollId, poll.id)),
+
+    db
+      .select({
+        hour: sql<string>`date_trunc('hour', ${votesTable.createdAt})::text`,
+        count: sql<number>`cast(count(*) as int)`,
+      })
+      .from(votesTable)
+      .where(eq(votesTable.pollId, poll.id))
+      .groupBy(sql`date_trunc('hour', ${votesTable.createdAt})`)
+      .orderBy(sql`date_trunc('hour', ${votesTable.createdAt})`),
+  ]);
 
   const totalResponses = voteResult[0]?.count ?? 0;
-
-  const velocity = await db
-    .select({
-      hour: sql<string>`date_trunc('hour', ${votesTable.createdAt})::text`,
-      count: sql<number>`cast(count(*) as int)`,
-    })
-    .from(votesTable)
-    .where(eq(votesTable.pollId, poll.id))
-    .groupBy(sql`date_trunc('hour', ${votesTable.createdAt})`)
-    .orderBy(sql`date_trunc('hour', ${votesTable.createdAt})`);
 
   return { ...poll, options, totalResponses, velocity };
 };
@@ -197,12 +199,19 @@ export const respond = async (
     throw ApiError.badRequest("You have already voted on this poll");
   }
 
-  await db.insert(votesTable).values({
-    pollId: poll.id,
-    optionId,
-    userId: userId || null,
-    fingerprint: userId ? null : fingerprint || null,
-  });
+  try {
+    await db.insert(votesTable).values({
+      pollId: poll.id,
+      optionId,
+      userId: userId || null,
+      fingerprint: userId ? null : fingerprint || null,
+    });
+  } catch (err: any) {
+    if (err?.code === "23505") {
+      throw ApiError.badRequest("You have already voted on this poll");
+    }
+    throw err;
+  }
 
   const updatedOptions = await db
     .select({

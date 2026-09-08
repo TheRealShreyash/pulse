@@ -65,5 +65,9 @@ export const votesTable = pgTable(
   },
   (table) => [
     uniqueIndex("votes_poll_user_unique").on(table.pollId, table.userId),
+    uniqueIndex("votes_poll_fingerprint_unique").on(
+      table.pollId,
+      table.fingerprint,
+    ),
   ],
 );

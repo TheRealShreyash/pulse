@@ -51,8 +51,6 @@ export const registerUser = async (payload: any) => {
 
   if (userResult) return;
 
-  console.log(payload);
-
   const [user] = await db
     .insert(usersTable)
     .values({

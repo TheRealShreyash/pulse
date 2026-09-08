@@ -19,13 +19,13 @@ export default class ApiError extends Error {
   }
 
   static forbidden(message = "Forbidden") {
-    return new ApiError(403, "Forbidden");
+    return new ApiError(403, message);
   }
 
   static notFound(message = "Not Found") {
-    return new ApiError(404, "Not Found");
+    return new ApiError(404, message);
   }
-  static internalError(message = "Not Found") {
-    return new ApiError(500, "Internal server error");
+  static internalError(message = "Internal server error") {
+    return new ApiError(500, message);
   }
 }
