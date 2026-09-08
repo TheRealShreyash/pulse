@@ -1,4 +1,3 @@
-import { BACKEND_URL } from "#/config";
 import type { Poll } from "#/lib/types";
 
 interface CreatePollPayload {
@@ -17,7 +16,7 @@ export interface ResponsePayload {
 }
 
 export const createPoll = async (payload: CreatePollPayload): Promise<Poll> => {
-  const response = await fetch(`${BACKEND_URL}/api/poll/create`, {
+  const response = await fetch(`/api/poll/create`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -37,7 +36,7 @@ export const createPoll = async (payload: CreatePollPayload): Promise<Poll> => {
 };
 
 export const getPoll = async (pollId: string) => {
-  const response = await fetch(`${BACKEND_URL}/api/poll/poll?id=${pollId}`, {
+  const response = await fetch(`/api/poll/poll?id=${pollId}`, {
     method: "GET",
     credentials: "include",
   });
@@ -53,7 +52,7 @@ export const getPoll = async (pollId: string) => {
 };
 
 export const publishPoll = async (pollId: string): Promise<Poll> => {
-  const response = await fetch(`${BACKEND_URL}/api/poll/publish?id=${pollId}`, {
+  const response = await fetch(`/api/poll/publish?id=${pollId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -71,7 +70,7 @@ export const publishPoll = async (pollId: string): Promise<Poll> => {
 };
 
 export const closePoll = async (pollId: string): Promise<Poll> => {
-  const response = await fetch(`${BACKEND_URL}/api/poll/close?id=${pollId}`, {
+  const response = await fetch(`/api/poll/close?id=${pollId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -89,7 +88,7 @@ export const closePoll = async (pollId: string): Promise<Poll> => {
 };
 
 export const getUserPolls = async (): Promise<Poll[]> => {
-  const response = await fetch(`${BACKEND_URL}/api/poll/user-polls`, {
+  const response = await fetch(`/api/poll/user-polls`, {
     method: "GET",
     credentials: "include",
   });
@@ -105,7 +104,7 @@ export const getUserPolls = async (): Promise<Poll[]> => {
 };
 
 export const respondToPoll = async (payload: ResponsePayload) => {
-  const response = await fetch(`${BACKEND_URL}/api/poll/respond`, {
+  const response = await fetch(`/api/poll/respond`, {
     credentials: "include",
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -122,12 +121,9 @@ export const respondToPoll = async (payload: ResponsePayload) => {
 };
 
 export const checkVote = async (pollId: string): Promise<boolean> => {
-  const response = await fetch(
-    `${BACKEND_URL}/api/poll/has-voted?id=${pollId}`,
-    {
-      credentials: "include",
-    },
-  );
+  const response = await fetch(`/api/poll/has-voted?id=${pollId}`, {
+    credentials: "include",
+  });
 
   if (!response.ok) {
     const err = await response.json();
