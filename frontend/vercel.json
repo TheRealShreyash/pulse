@@ -1,9 +1,9 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" },
     {
       "source": "/api/:path*",
       "destination": "https://pulse-backend-binc.onrender.com/api/:path*"
-    }
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
