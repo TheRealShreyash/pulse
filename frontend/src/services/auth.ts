@@ -1,5 +1,14 @@
 // import { BACKEND_URL } from "#/config";
 
+export interface AuthUser {
+  sub: string;
+  email: string;
+  name: string;
+  given_name: string;
+  family_name: string;
+  picture?: string;
+}
+
 export const redirectToIrisLogin = () => {
   window.location.href = `/api/auth/iris-login`;
 };
@@ -9,12 +18,18 @@ export const redirectToIrisSignup = () => {
 };
 
 export const authenticate = async () => {
+  const me = await getMe();
+  return me !== null;
+};
+
+// Fetches the authenticated user in a single round-trip (falling back to a
+// token refresh + retry once), instead of making a separate boolean auth
+// check and then a separate /userinfo call.
+export const getMe = async (): Promise<AuthUser | null> => {
   try {
-    const response = await fetch(`/api/auth/me`, {
+    let response = await fetch(`/api/auth/me`, {
       credentials: "include",
     });
-
-    if (response.ok) return true;
 
     if (response.status === 401) {
       const refreshRes = await fetch(`/api/auth/refresh-token`, {
@@ -22,27 +37,20 @@ export const authenticate = async () => {
         credentials: "include",
       });
 
-      return refreshRes.ok;
+      if (!refreshRes.ok) return null;
+
+      response = await fetch(`/api/auth/me`, {
+        credentials: "include",
+      });
     }
-    return false;
+
+    if (!response.ok) return null;
+
+    const { data } = await response.json();
+    return data;
   } catch (error) {
     console.log(`[AUTH] error: ${error}`);
-    return false;
+    return null;
   }
 };
 
-export const getUserInfo = async () => {
-  const response = await fetch(`/api/auth/userinfo`, {
-    credentials: "include",
-    method: "POST",
-  });
-
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.message ?? "Failed to fetch user info");
-  }
-
-  const userData = await response.json();
-
-  return userData;
-};

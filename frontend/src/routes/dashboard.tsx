@@ -4,21 +4,21 @@ import { TopBar } from "../components/ui/TopBar";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import type { Poll, PollStatus } from "#/lib/types";
-import { authenticate, getUserInfo } from "#/services/auth";
+import { getMe } from "#/services/auth";
 import { getUserPolls } from "#/services/poll";
 import { getInitials } from "#/lib/utils";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: async () => {
-    const isAuthenticated = await authenticate();
-    if (!isAuthenticated) {
+    const userData = await getMe();
+    if (!userData) {
       throw redirect({ to: "/login", replace: true, search: {} });
     }
+    return { userData };
   },
-  loader: async () => {
+  loader: async ({ context }) => {
     const polls = await getUserPolls();
-    const userData = await getUserInfo();
-    return { polls, userData };
+    return { polls, userData: context.userData };
   },
   component: Dashboard,
 });
@@ -191,17 +191,23 @@ function Dashboard() {
   const liveCount = polls.filter((p) => p.status === "LIVE").length;
 
   return (
-    <>
+    <div className="min-h-screen bg-bg-0 bg-grid relative">
+      {/* faint top glow, echoing the landing hero */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-40 w-175 h-100 rounded-full"
+        style={{
+          background:
+            "radial-gradient(ellipse, rgba(34,197,94,0.06) 0%, transparent 70%)",
+        }}
+      />
+
       <TopBar
         showAvatar
-        initials={getInitials(userData.data.name)}
+        initials={getInitials(userData.name)}
         right={
           <Link to="/create">
-            <Button
-              variant="accent"
-              size="sm"
-              className="shadow-sm hover:shadow-md transition-shadow"
-            >
+            <Button variant="accent" size="sm">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path
                   d="M6 1v10M1 6h10"
@@ -216,12 +222,17 @@ function Dashboard() {
         }
       />
 
-      <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
+      <main className="relative max-w-2xl mx-auto px-4 py-8 animate-fade-in">
         <div className="mb-7 flex items-baseline justify-between">
           <div>
-            <h1 className="text-[16px] font-medium text-ink-1">Your polls</h1>
+            <p className="text-[10px] font-mono font-medium text-green-acc uppercase tracking-widest mb-1">
+              Dashboard
+            </p>
+            <h1 className="text-[22px] font-bold text-ink-1 tracking-tight">
+              Your polls
+            </h1>
             {liveCount > 0 && (
-              <p className="text-[12px] text-ink-2 mt-0.5 flex items-center gap-1.5">
+              <p className="text-[12px] font-mono text-ink-2 mt-1 flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
@@ -230,14 +241,14 @@ function Dashboard() {
               </p>
             )}
           </div>
-          <p className="text-[11px] text-ink-2 tabular-nums">
+          <p className="text-[11px] font-mono text-ink-2 tabular-nums">
             {polls.length} total
           </p>
         </div>
 
         {polls.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-4 animate-fade-in-up">
-            <div className="w-16 h-16 rounded-full bg-linear-to-br from-ink-2/10 to-ink-3/5 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-linear-to-br from-green-dim to-transparent border border-green-bar/15 flex items-center justify-center shadow-[0_0_30px_rgba(74,222,128,0.08)]">
               <svg
                 width="28"
                 height="28"
@@ -245,7 +256,7 @@ function Dashboard() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.2"
-                className="text-ink-2"
+                className="text-green-acc"
               >
                 <path
                   d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
@@ -254,7 +265,7 @@ function Dashboard() {
                 <circle cx="12" cy="12" r="3" />
               </svg>
             </div>
-            <p className="text-[14px] text-ink-1">No polls yet</p>
+            <p className="text-[14px] text-ink-1 font-medium">No polls yet</p>
             <p className="text-[12px] text-ink-2 max-w-55">
               Create your first poll and share it with the world.
             </p>
@@ -266,12 +277,18 @@ function Dashboard() {
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">
-            {polls.map((p) => (
-              <PollRow key={p.id} poll={p} />
+            {polls.map((p, i) => (
+              <div
+                key={p.id}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+              >
+                <PollRow poll={p} />
+              </div>
             ))}
           </div>
         )}
       </main>
-    </>
+    </div>
   );
 }

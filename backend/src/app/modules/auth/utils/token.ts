@@ -6,7 +6,7 @@ import { IRIS_AUTH_URL } from "../../../../config";
 const client = JwksClient({
   jwksUri: `${IRIS_AUTH_URL}/auth/certs`,
   cache: true,
-  cacheMaxAge: 86400,
+  cacheMaxAge: 24 * 60 * 60 * 1000, // 24 hours, in ms
 });
 
 export async function verifyAccessToken(token: string) {

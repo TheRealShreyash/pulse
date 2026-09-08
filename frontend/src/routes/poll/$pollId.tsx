@@ -17,8 +17,10 @@ import { Share2 } from "lucide-react";
 
 export const Route = createFileRoute("/poll/$pollId")({
   loader: async ({ params }) => {
-    const data = await getPoll(params.pollId);
-    const voted = await checkVote(params.pollId);
+    const [data, voted] = await Promise.all([
+      getPoll(params.pollId),
+      checkVote(params.pollId),
+    ]);
     return { data, voted };
   },
   component: PollPage,
@@ -61,7 +63,7 @@ function PollPage() {
 
   usePollSocket({
     pollId,
-    enabled: (isActive && poll.showLiveResults) || voted,
+    enabled: (isActive && poll.showLiveResults) || hasVoted,
     onVoteUpdate: ({ counts, total }) => {
       setPoll((prev) => ({
         ...prev,
@@ -114,26 +116,29 @@ function PollPage() {
   if (isPublished) {
     const leadingIdx = pcts.indexOf(Math.max(...pcts));
     return (
-      <>
+      <div className="min-h-screen bg-bg-0 bg-grid">
         <TopBar right={<Badge variant="PUBLISHED" />} />
         <main className="max-w-lg mx-auto px-4 py-10 animate-slide-up">
-          <p className="text-[10px] font-medium text-ink-3 uppercase tracking-widest mb-2">
+          <p className="flex items-center gap-2 text-[10px] font-mono font-medium text-ink-3 uppercase tracking-widest mb-3">
+            <span aria-hidden="true" className="w-4 h-px bg-ink-3" />
             Final results
           </p>
-          <h1 className="text-[18px] font-medium text-ink-1 leading-snug mb-2">
+          <h1 className="text-[22px] font-bold text-ink-1 tracking-tight leading-snug mb-2">
             {poll.title}
           </h1>
-          <p className="text-[11px] text-ink-3 mb-7">
+          <p className="text-[11px] font-mono text-ink-3 mb-7 tabular-nums">
             {poll.totalResponses} responses ·{" "}
             {poll.isAnonymous ? "Anonymous" : "Authenticated"}
           </p>
 
-          <div className="mb-6 px-4 py-3 rounded-lg bg-green-dim border border-green-bar/25">
-            <p className="text-[11px] text-ink-3 mb-0.5">Most voted</p>
-            <p className="text-[15px] font-medium text-green-acc">
+          <div className="mb-6 px-4 py-3.5 rounded-lg bg-green-dim border border-green-bar/25 shadow-[0_0_24px_rgba(74,222,128,0.1)]">
+            <p className="text-[11px] font-mono text-ink-3 mb-0.5 uppercase tracking-wide">
+              Most voted
+            </p>
+            <p className="text-[16px] font-bold text-green-acc">
               {poll.options[leadingIdx].text}
             </p>
-            <p className="text-[11px] text-ink-2 mt-0.5">
+            <p className="text-[11px] font-mono text-ink-2 mt-0.5 tabular-nums">
               {poll.options[leadingIdx].count} votes · {pcts[leadingIdx]}%
             </p>
           </div>
@@ -171,21 +176,32 @@ function PollPage() {
             </>
           )}
         </Button>
-      </>
+      </div>
     );
   }
 
   // ─── ACTIVE / CLOSED VIEW (no share button) ─────────────────
   return (
-    <>
+    <div className="min-h-screen bg-bg-0 bg-grid relative">
+      {isActive && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-40 w-175 h-100 rounded-full"
+          style={{
+            background:
+              "radial-gradient(ellipse, rgba(34,197,94,0.07) 0%, transparent 70%)",
+          }}
+        />
+      )}
+
       <TopBar liveCount={isActive ? poll.totalResponses : undefined} />
 
-      <main className="max-w-lg mx-auto px-4 py-10 animate-slide-up">
-        <h1 className="text-[18px] font-medium text-ink-1 leading-snug mb-3">
+      <main className="relative max-w-lg mx-auto px-4 py-10 animate-slide-up">
+        <h1 className="text-[22px] font-bold text-ink-1 tracking-tight leading-snug mb-3">
           {poll.title}
         </h1>
 
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-3 mb-7">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-mono text-ink-3 mb-7">
           {isActive && (
             <>
               <span className="flex items-center gap-1.5">
@@ -203,7 +219,7 @@ function PollPage() {
         </div>
 
         {authBlocked && (
-          <div className="mb-6 px-4 py-4 rounded-lg border border-white/8 bg-bg-2 text-center">
+          <div className="mb-6 px-4 py-4 rounded-lg border border-white/8 bg-bg-2 text-center animate-fade-in-up">
             <p className="text-[13px] text-ink-2 mb-3">
               This poll requires you to sign in to vote.
             </p>
@@ -244,21 +260,23 @@ function PollPage() {
               {submitting ? "Submitting…" : "Submit vote"}
             </Button>
             {error && (
-              <p className="text-[12px] text-red-400 text-center">{error}</p>
+              <p className="text-[12px] text-red-400 text-center pl-3 border-l-2 border-red-900/60 mx-auto">
+                {error}
+              </p>
             )}
           </div>
         )}
 
         {hasVoted && (
-          <div className="mt-4 space-y-1 text-center">
+          <div className="mt-4 space-y-1 text-center animate-fade-in-up">
             <p className="text-[12px] text-ink-3">Your vote is recorded</p>
             {isActive && poll.showLiveResults && (
-              <p className="text-[11px] text-ink-3 flex items-center justify-center gap-1.5">
+              <p className="text-[11px] font-mono text-ink-3 flex items-center justify-center gap-1.5">
                 <LiveDot />
                 Results update live
               </p>
             )}
-            <p className="text-[12px] text-ink-3 tabular-nums">
+            <p className="text-[12px] font-mono text-ink-3 tabular-nums">
               {poll.totalResponses}{" "}
               {poll.totalResponses === 1 ? "response" : "responses"}
             </p>
@@ -274,6 +292,6 @@ function PollPage() {
           </div>
         )}
       </main>
-    </>
+    </div>
   );
 }

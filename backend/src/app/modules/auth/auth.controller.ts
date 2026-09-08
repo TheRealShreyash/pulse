@@ -10,10 +10,24 @@ import { callback, refreshTokens, registerUser } from "./auth.services";
 import { verifyAccessToken } from "./utils/token";
 import type { AuthenticatedRequest } from "../../common/utils/interfaces";
 
+const isProduction = NODE_ENV.toLowerCase() === "production";
+
+// SameSite=None cookies are rejected outright by browsers unless Secure is
+// also set, and Secure cookies never get attached over plain HTTP — so in
+// dev (http://localhost) "none" silently drops both auth cookies.
+function authCookieOptions(maxAge: number) {
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
+    maxAge,
+  };
+}
+
 export class AuthController {
-  static async handleMe(req: Request, res: Response) {
+  static async handleMe(req: AuthenticatedRequest, res: Response) {
     try {
-      ApiResponse.ok(res, "Me");
+      ApiResponse.ok(res, "Me", req.user);
     } catch (error) {
       ApiResponse.error(res, error);
     }
@@ -45,20 +59,13 @@ export class AuthController {
         accessToken: string;
         refreshToken: string;
       };
-      const isProduction = NODE_ENV.toLowerCase() === "production";
 
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "none",
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-      res.cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "none",
-        maxAge: 15 * 60 * 1000,
-      });
+      res.cookie(
+        "refreshToken",
+        refreshToken,
+        authCookieOptions(24 * 60 * 60 * 1000),
+      );
+      res.cookie("accessToken", accessToken, authCookieOptions(15 * 60 * 1000));
 
       const userData = await verifyAccessToken(accessToken);
 
@@ -77,20 +84,12 @@ export class AuthController {
       const { accessToken, refreshToken } =
         await refreshTokens(oldRefreshToken);
 
-      const isProduction = NODE_ENV.toLowerCase() === "production";
-
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "none",
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-      res.cookie("accessToken", accessToken, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "none",
-        maxAge: 15 * 60 * 1000,
-      });
+      res.cookie(
+        "refreshToken",
+        refreshToken,
+        authCookieOptions(24 * 60 * 60 * 1000),
+      );
+      res.cookie("accessToken", accessToken, authCookieOptions(15 * 60 * 1000));
 
       ApiResponse.ok(res, "Tokens refreshed successfully");
     } catch (error) {
