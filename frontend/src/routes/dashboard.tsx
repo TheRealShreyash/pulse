@@ -191,7 +191,7 @@ function Dashboard() {
   const liveCount = polls.filter((p) => p.status === "LIVE").length;
 
   return (
-    <div className="min-h-screen bg-bg-0 bg-grid relative">
+    <div className="min-h-screen bg-bg-0 bg-grid relative overflow-x-hidden">
       {/* faint top glow, echoing the landing hero */}
       <div
         aria-hidden="true"

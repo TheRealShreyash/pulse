@@ -182,7 +182,7 @@ function PollPage() {
 
   // ─── ACTIVE / CLOSED VIEW (no share button) ─────────────────
   return (
-    <div className="min-h-screen bg-bg-0 bg-grid relative">
+    <div className="min-h-screen bg-bg-0 bg-grid relative overflow-x-hidden">
       {isActive && (
         <div
           aria-hidden="true"

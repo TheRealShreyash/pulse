@@ -54,12 +54,11 @@ export function TopBar({
             to="/"
             className="flex items-center gap-2 text-[14px] font-semibold text-ink-1 tracking-tight hover:text-green-acc transition-colors"
           >
-            <span className="w-4.5 h-4.5 rounded-[5px] bg-green-dim border border-green-bar/25 flex items-center justify-center">
-              <svg width="8" height="8" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="8" r="6.5" stroke="#4ade80" strokeWidth="1.5" />
-                <circle cx="8" cy="8" r="2.5" fill="#4ade80" />
-              </svg>
-            </span>
+            <img
+              src="/favicon.png"
+              alt=""
+              className="w-4.5 h-4.5 rounded-[5px]"
+            />
             Pulse
           </Link>
         )}
