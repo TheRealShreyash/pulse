@@ -56,7 +56,7 @@ export function Sparkline({ data }: { data: VelocityPoint[] }) {
       </svg>
       <div className="flex justify-between mt-1.5">
         {data.map((v, i) => (
-          <span key={i} className="text-[9px] text-ink-3">
+          <span key={i} className="text-[9px] font-mono text-ink-3">
             {formatHour(v.hour)}
           </span>
         ))}

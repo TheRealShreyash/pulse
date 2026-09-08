@@ -45,9 +45,13 @@ function timeLeft(iso: string): string {
 
 function StatCard({ value, label }: { value: string; label: string }) {
   return (
-    <div className="bg-bg-2 rounded-lg px-3 py-2.5">
-      <p className="text-[20px] font-medium text-ink-1 tabular-nums">{value}</p>
-      <p className="text-[11px] text-ink-2 mt-0.5">{label}</p>
+    <div className="bg-bg-2 border border-white/6 rounded-lg px-3 py-2.5 hover-lift hover:border-green-bar/20">
+      <p className="text-[22px] font-bold font-mono text-ink-1 tabular-nums">
+        {value}
+      </p>
+      <p className="text-[10px] font-mono text-ink-2 mt-0.5 uppercase tracking-wide">
+        {label}
+      </p>
     </div>
   );
 }
@@ -113,7 +117,7 @@ function AnalyticsPage() {
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-bg-0 bg-grid">
       <TopBar
         backTo="/dashboard"
         title="Analytics"
@@ -129,20 +133,28 @@ function AnalyticsPage() {
       <main className="max-w-2xl mx-auto px-4 py-8 animate-slide-up">
         {/* Title + share link */}
         <div className="mb-6">
-          <h1 className="text-[16px] font-medium text-ink-1 leading-snug mb-2">
+          <h1 className="text-[20px] font-bold text-ink-1 tracking-tight leading-snug mb-2.5">
             {data.title}
           </h1>
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-ink-3">
-            <span>{shareUrl}</span>
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+            <span className="text-[11px] font-mono text-ink-3 bg-bg-2 border border-white/6 rounded-md px-2 py-1">
+              {shareUrl}
+            </span>
             <button
               onClick={handleCopy}
-              className="text-green-acc hover:text-green-bar transition-colors"
+              className="text-[11px] font-mono text-green-acc hover:text-green-bar transition-colors"
             >
               {copied ? "Copied!" : "Copy link"}
             </button>
-            {data.isAnonymous && <span>· Anonymous</span>}
+            {data.isAnonymous && (
+              <span className="text-[11px] font-mono text-ink-3">
+                · Anonymous
+              </span>
+            )}
             {isActive && data.expiresAt && (
-              <span>· {timeLeft(data.expiresAt)}</span>
+              <span className="text-[11px] font-mono text-ink-3">
+                · {timeLeft(data.expiresAt)}
+              </span>
             )}
           </div>
         </div>
@@ -163,7 +175,8 @@ function AnalyticsPage() {
 
         {/* Breakdown */}
         <section className="mb-7 space-y-3.5">
-          <p className="text-[10px] font-medium text-ink-2 uppercase tracking-widest">
+          <p className="flex items-center gap-2 text-[10px] font-mono font-medium text-green-acc uppercase tracking-widest">
+            <span aria-hidden="true" className="w-4 h-px bg-green-acc opacity-60" />
             Breakdown
           </p>
           {data.options.map((opt, i) => (
@@ -179,10 +192,11 @@ function AnalyticsPage() {
 
         {/* Velocity chart */}
         <section className="mb-8">
-          <p className="text-[10px] font-medium text-ink-2 uppercase tracking-widest mb-3">
+          <p className="flex items-center gap-2 text-[10px] font-mono font-medium text-green-acc uppercase tracking-widest mb-3">
+            <span aria-hidden="true" className="w-4 h-px bg-green-acc opacity-60" />
             Response velocity
           </p>
-          <div className="bg-bg-2 rounded-lg p-4">
+          <div className="bg-bg-2 border border-white/6 rounded-lg p-4">
             <Sparkline data={data.velocity} />
           </div>
         </section>
@@ -204,7 +218,7 @@ function AnalyticsPage() {
 
           <div className="flex items-center gap-4">
             {isActive && (
-              <span className="text-[11px] text-ink-3 flex items-center gap-1.5">
+              <span className="text-[11px] font-mono text-ink-3 flex items-center gap-1.5">
                 <LiveDot />
                 Live updates
               </span>
@@ -243,6 +257,6 @@ function AnalyticsPage() {
           </div>
         </div>
       </main>
-    </>
+    </div>
   );
 }

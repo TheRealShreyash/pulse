@@ -1,7 +1,7 @@
 type BadgeVariant = "LIVE" | "DRAFT" | "ENDED" | "PUBLISHED" | "ANON";
 
 const STYLES: Record<BadgeVariant, string> = {
-  LIVE: "bg-green-dim text-green-acc border border-green-bar/30",
+  LIVE: "bg-green-dim text-green-acc border border-green-bar/30 shadow-[0_0_12px_rgba(74,222,128,0.15)]",
   DRAFT: "bg-white/[0.04] text-ink-3 border border-white/[0.06]",
   ENDED: "bg-white/[0.05] text-ink-2 border border-white/[0.08]",
   PUBLISHED: "bg-sky-900/40 text-sky-400 border border-sky-700/40",
@@ -19,7 +19,7 @@ const LABELS: Record<BadgeVariant, string> = {
 export function Badge({ variant }: { variant: BadgeVariant }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium tracking-wide ${STYLES[variant]}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono font-medium tracking-wide uppercase ${STYLES[variant]}`}
     >
       {variant === "LIVE" && (
         <span

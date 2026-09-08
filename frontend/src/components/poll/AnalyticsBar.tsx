@@ -17,7 +17,7 @@ export function AnalyticsBar({
         <span className={isLeading ? "text-ink-1 font-medium" : "text-ink-2"}>
           {label}
         </span>
-        <span className="text-ink-1 font-medium tabular-nums">
+        <span className="font-mono text-ink-1 font-medium tabular-nums">
           {count} · {pct}%
         </span>
       </div>
@@ -26,7 +26,10 @@ export function AnalyticsBar({
           className="h-full rounded-full bar-transition"
           style={{
             width: `${pct}%`,
-            background: isLeading ? "#22c55e" : "rgba(255,255,255,0.22)",
+            background: isLeading
+              ? "linear-gradient(90deg, #16a34a, #4ade80)"
+              : "rgba(255,255,255,0.22)",
+            boxShadow: isLeading ? "0 0 8px rgba(74,222,128,0.35)" : "none",
           }}
         />
       </div>

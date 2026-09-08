@@ -17,11 +17,11 @@ export default defineConfig({
     react(),
   ],
   server: {
-    // proxy: {
-    //   "/api": {
-    //     target: "https://pulse-omega-lovat.vercel.app/",
-    //     changeOrigin: true,
-    //   },
-    // },
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
+    },
   },
 });

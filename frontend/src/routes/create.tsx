@@ -40,6 +40,17 @@ const EXPIRY_OPTIONS = [
   { label: "No expiry", value: 0 },
 ];
 
+// ── section label, matching the landing page's accent-dash headers ─────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="flex items-center gap-2 text-[10px] font-mono font-medium text-green-acc uppercase tracking-widest mb-3">
+      <span aria-hidden="true" className="w-4 h-px bg-green-acc opacity-60" />
+      {children}
+    </p>
+  );
+}
+
 // ── setting row wrapper ───────────────────────────────────────────────────────
 
 function SettingRow({
@@ -120,7 +131,6 @@ function CreatePoll() {
       const payload = {
         title: form.title.trim(),
         options: filledOptions,
-        description: "TEST",
         isAnonymous: form.isAnonymous,
         showLiveResults: form.showLiveResults,
         expiresAt: expiryDate || null,
@@ -132,49 +142,49 @@ function CreatePoll() {
         to: "/analytics/$pollId",
         params: { pollId: pollData.id },
       });
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Something went wrong. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-bg-0 bg-grid">
       <TopBar backTo="/dashboard" title="New poll" />
 
       <main className="max-w-xl mx-auto px-4 py-8 animate-slide-up">
         {/* Question */}
         <section className="mb-7">
-          <label className="block text-[10px] font-medium text-ink-2 uppercase tracking-widest mb-2">
-            Question
-          </label>
+          <SectionLabel>Question</SectionLabel>
           <textarea
             value={form.title}
             onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
             placeholder="Ask something…"
             rows={2}
             maxLength={280}
-            className="w-full px-3 py-2.5 rounded-lg bg-bg-2 border border-white/8 text-[14px] text-ink-1 placeholder-ink-3 resize-none focus:border-white/20 transition-colors"
+            className="w-full px-3 py-2.5 rounded-lg bg-bg-2 border border-white/8 text-[14px] text-ink-1 placeholder-ink-3 resize-none transition-colors"
           />
-          <p className="text-[10px] text-ink-3 mt-1 text-right">
+          <p className="text-[10px] font-mono text-ink-3 mt-1 text-right tabular-nums">
             {form.title.length}/280
           </p>
         </section>
 
         {/* Options */}
         <section className="mb-7">
-          <label className="block text-[10px] font-medium text-ink-2 uppercase tracking-widest mb-2">
+          <SectionLabel>
             Options
-            <span className="normal-case text-ink-3 ml-1.5 font-normal tracking-normal">
+            <span className="normal-case text-ink-3 font-normal tracking-normal">
               ({form.options.length}/10)
             </span>
-          </label>
+          </SectionLabel>
 
           <div className="flex flex-col gap-2">
             {form.options.map((opt, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="text-[11px] text-ink-3 w-4 text-right select-none shrink-0">
+                <span className="text-[11px] font-mono text-ink-3 w-4 text-right select-none shrink-0">
                   {i + 1}
                 </span>
                 <input
@@ -183,7 +193,7 @@ function CreatePoll() {
                   onChange={(e) => setOption(i, e.target.value)}
                   placeholder={`Option ${i + 1}`}
                   maxLength={120}
-                  className="flex-1 px-3 py-2 rounded-lg bg-bg-2 border border-white/[0.07] text-[13px] placeholder-ink-3 focus:border-white/18 transition-colors"
+                  className="flex-1 px-3 py-2 rounded-lg bg-bg-2 border border-white/[0.07] text-[13px] placeholder-ink-3 transition-colors"
                 />
                 {form.options.length > 2 && (
                   <button
@@ -214,7 +224,7 @@ function CreatePoll() {
           {form.options.length < 10 && (
             <button
               onClick={addOption}
-              className="flex items-center gap-1.5 mt-3 text-[12px] text-ink-2 hover:text-ink-1 transition-colors"
+              className="flex items-center gap-1.5 mt-3 text-[12px] text-green-acc hover:text-green-bar transition-colors"
             >
               <svg
                 width="12"
@@ -237,9 +247,7 @@ function CreatePoll() {
 
         {/* Settings */}
         <section className="mb-8">
-          <p className="text-[10px] font-medium text-ink-2 uppercase tracking-widest mb-1">
-            Settings
-          </p>
+          <SectionLabel>Settings</SectionLabel>
 
           <SettingRow
             label="Anonymous responses"
@@ -274,7 +282,7 @@ function CreatePoll() {
               onChange={(e) =>
                 setForm((f) => ({ ...f, expiryHours: Number(e.target.value) }))
               }
-              className="px-2.5 py-1.5 rounded-lg bg-bg-2 border border-white/8 text-[12px] focus:border-white/20 cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-bg-2 border border-white/8 text-[12px] font-mono cursor-pointer"
             >
               {EXPIRY_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -285,7 +293,11 @@ function CreatePoll() {
           </SettingRow>
         </section>
 
-        {error && <p className="text-[12px] text-red-400 mb-4">{error}</p>}
+        {error && (
+          <p className="text-[12px] text-red-400 mb-4 pl-3 border-l-2 border-red-900/60">
+            {error}
+          </p>
+        )}
 
         <div className="flex items-center justify-end gap-3">
           <Button
@@ -304,6 +316,6 @@ function CreatePoll() {
           </Button>
         </div>
       </main>
-    </>
+    </div>
   );
 }

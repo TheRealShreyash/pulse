@@ -19,14 +19,14 @@ export function TopBar({
   liveCount,
 }: TopBarProps) {
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between h-11 px-5 bg-bg-0 border-b border-white/[0.07]">
+    <header className="sticky top-0 z-20 flex items-center justify-between h-11 px-5 bg-bg-0/85 backdrop-blur-md border-b border-white/[0.07] shadow-[0_1px_0_rgba(74,222,128,0.06)]">
       {/* Left */}
       <div className="flex items-center gap-2.5">
         {backTo && (
           <Link
             to={backTo}
             aria-label="Back"
-            className="text-ink-2 hover:text-ink-1 transition-colors"
+            className="text-ink-2 hover:text-green-acc transition-colors"
           >
             <svg
               width="16"
@@ -46,12 +46,20 @@ export function TopBar({
           </Link>
         )}
         {title ? (
-          <span className="text-[14px] font-medium text-ink-1">{title}</span>
+          <span className="text-[14px] font-semibold text-ink-1 tracking-tight">
+            {title}
+          </span>
         ) : (
           <Link
             to="/"
-            className="text-[14px] font-medium text-ink-1 hover:text-green-acc transition-colors"
+            className="flex items-center gap-2 text-[14px] font-semibold text-ink-1 tracking-tight hover:text-green-acc transition-colors"
           >
+            <span className="w-4.5 h-4.5 rounded-[5px] bg-green-dim border border-green-bar/25 flex items-center justify-center">
+              <svg width="8" height="8" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6.5" stroke="#4ade80" strokeWidth="1.5" />
+                <circle cx="8" cy="8" r="2.5" fill="#4ade80" />
+              </svg>
+            </span>
             Pulse
           </Link>
         )}
@@ -62,14 +70,14 @@ export function TopBar({
         {liveCount !== undefined && (
           <div className="flex items-center gap-1.5">
             <LiveDot />
-            <span className="text-[11px] text-ink-2 tabular-nums">
+            <span className="text-[11px] font-mono text-ink-2 tabular-nums">
               {liveCount} votes
             </span>
           </div>
         )}
         {right}
         {showAvatar && (
-          <div className="w-6.5 h-6.5 rounded-full bg-green-dim border border-green-bar/30 flex items-center justify-center text-[11px] font-medium text-green-acc select-none">
+          <div className="w-6.5 h-6.5 rounded-full bg-green-dim border border-green-bar/30 flex items-center justify-center text-[11px] font-mono font-medium text-green-acc select-none hover:border-green-bar/50 transition-colors">
             {initials}
           </div>
         )}

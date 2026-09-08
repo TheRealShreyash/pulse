@@ -15,7 +15,7 @@ const VARIANTS: Record<Variant, string> = {
   primary:
     'bg-white/[0.06] border border-white/[0.13] text-ink-1 hover:bg-white/10 hover:border-white/20',
   accent:
-    'bg-green-dim border border-green-bar/40 text-green-acc hover:bg-green-dimhover hover:border-green-bar/60',
+    'bg-green-dim border border-green-bar/40 text-green-acc shadow-[0_0_0_0_rgba(74,222,128,0)] hover:bg-green-dimhover hover:border-green-bar/60 hover:shadow-[0_4px_16px_rgba(74,222,128,0.18)] hover:-translate-y-px active:translate-y-0 active:scale-[0.98]',
   danger:
     'bg-transparent border border-red-900/60 text-red-400 hover:bg-red-900/20',
 }
@@ -37,7 +37,7 @@ export function Button({
       className={[
         'inline-flex items-center gap-2 font-medium transition-all duration-150',
         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-acc',
-        'disabled:opacity-40 disabled:cursor-not-allowed',
+        'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none',
         VARIANTS[variant],
         SIZES[size],
         className,

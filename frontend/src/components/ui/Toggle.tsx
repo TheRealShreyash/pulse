@@ -13,10 +13,10 @@ export function Toggle({ id, checked, onChange }: ToggleProps) {
       aria-checked={checked}
       onClick={() => onChange(!checked)}
       className={[
-        'relative w-8 h-[18px] rounded-full border flex-shrink-0 transition-colors duration-200',
+        'relative w-8 h-[18px] rounded-full border flex-shrink-0 transition-all duration-200',
         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-acc',
         checked
-          ? 'bg-green-bar border-green-bar'
+          ? 'bg-green-bar border-green-bar shadow-[0_0_10px_rgba(74,222,128,0.35)]'
           : 'bg-bg-3 border-white/[0.13]',
       ].join(' ')}
     >

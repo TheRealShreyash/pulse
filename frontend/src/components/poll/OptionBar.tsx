@@ -27,11 +27,11 @@ export function OptionBar({
       aria-pressed={isSelected}
       className={[
         'relative w-full text-left rounded-lg border overflow-hidden',
-        'transition-colors duration-150',
+        'transition-all duration-150',
         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-acc',
         isSelected
-          ? 'border-green-acc'
-          : 'border-white/[0.08] hover:border-white/[0.18]',
+          ? 'border-green-acc shadow-[0_0_0_1px_rgba(74,222,128,0.15),0_4px_16px_rgba(74,222,128,0.1)]'
+          : 'border-white/[0.08] hover:border-white/[0.18] hover:bg-white/[0.02]',
         disabled && !hasVoted
           ? 'cursor-not-allowed opacity-40'
           : 'cursor-pointer',
@@ -75,7 +75,7 @@ export function OptionBar({
         </span>
         {hasVoted && (
           <span
-            className={`text-[12px] font-medium tabular-nums ${isSelected ? 'text-green-acc' : 'text-ink-2'}`}
+            className={`text-[12px] font-mono font-medium tabular-nums ${isSelected ? 'text-green-acc' : 'text-ink-2'}`}
           >
             {pct}%
           </span>
