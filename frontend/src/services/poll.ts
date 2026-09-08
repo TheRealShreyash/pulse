@@ -128,6 +128,12 @@ export const checkVote = async (pollId: string): Promise<boolean> => {
       credentials: "include",
     },
   );
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.message ?? "Failed to check vote status");
+  }
+
   const { data } = await response.json();
   return data.voted;
 };

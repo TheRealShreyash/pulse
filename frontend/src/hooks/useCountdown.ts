@@ -13,14 +13,16 @@ function fmt(iso: string): string {
 }
 
 export function useCountdown(iso: string | null): string {
-  const [label, setLabel] = useState(iso ? fmt(iso) : '')
+  // `tick` exists only to force a re-render every 30s; the label itself is
+  // always derived fresh from `iso` below, so it's never stale on mount or
+  // when `iso` changes.
+  const [, setTick] = useState(0)
 
   useEffect(() => {
     if (!iso) return
-    setLabel(fmt(iso))
-    const id = setInterval(() => setLabel(fmt(iso)), 30_000)
+    const id = setInterval(() => setTick((t) => t + 1), 30_000)
     return () => clearInterval(id)
   }, [iso])
 
-  return label
+  return iso ? fmt(iso) : ''
 }

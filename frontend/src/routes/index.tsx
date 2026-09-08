@@ -1032,12 +1032,6 @@ export default function LandingPage() {
         }
       `}</style>
 
-      {/* Load Google Fonts exactly as in original HTML */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-      />
-
       <div className="grid-bg"></div>
 
       {/* Navigation */}
