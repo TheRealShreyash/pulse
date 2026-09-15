@@ -60,6 +60,13 @@ export class AuthController {
         refreshToken: string;
       };
 
+      // Registration is checked before any cookie is set, so a rejected
+      // sign-in (e.g. email already registered elsewhere) never leaves the
+      // browser holding valid-looking cookies for an account that doesn't
+      // actually exist in usersTable.
+      const userData = await verifyAccessToken(accessToken);
+      await registerUser(userData);
+
       res.cookie(
         "refreshToken",
         refreshToken,
@@ -67,12 +74,14 @@ export class AuthController {
       );
       res.cookie("accessToken", accessToken, authCookieOptions(15 * 60 * 1000));
 
-      const userData = await verifyAccessToken(accessToken);
-
-      await registerUser(userData);
-
       res.redirect(`${FRONTEND_URL}/dashboard`);
     } catch (error) {
+      if (error instanceof ApiError && error.statusCode === 409) {
+        res.redirect(
+          `${FRONTEND_URL}/login?error=${encodeURIComponent(error.message)}`,
+        );
+        return;
+      }
       // Instead of this response serve an error file
       ApiResponse.error(res, error);
     }
@@ -100,6 +109,20 @@ export class AuthController {
   static async handleUserInfo(req: AuthenticatedRequest, res: Response) {
     try {
       ApiResponse.ok(res, "Userinfo through token", req.user!);
+    } catch (error) {
+      ApiResponse.error(res, error);
+    }
+  }
+
+  static async handleLogout(_: Request, res: Response) {
+    try {
+      // clearCookie only actually removes the cookie if these attributes
+      // match how it was set (path/httpOnly/secure/sameSite) — a mismatch
+      // here is a common way for "logout" to silently do nothing.
+      const { maxAge: _maxAge, ...clearOptions } = authCookieOptions(0);
+      res.clearCookie("accessToken", clearOptions);
+      res.clearCookie("refreshToken", clearOptions);
+      ApiResponse.ok(res, "Logged out");
     } catch (error) {
       ApiResponse.error(res, error);
     }

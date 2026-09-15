@@ -1,12 +1,16 @@
 // import { BACKEND_URL } from "#/config";
+import { authClient } from "#/lib/auth-client";
 
 export interface AuthUser {
   sub: string;
   email: string;
   name: string;
-  given_name: string;
-  family_name: string;
+  // Only present for Iris-authenticated users — Google (via Better Auth)
+  // doesn't supply these, so they're never guaranteed.
+  given_name?: string;
+  family_name?: string;
   picture?: string;
+  provider?: "iris" | "google";
 }
 
 export const redirectToIrisLogin = () => {
@@ -52,5 +56,15 @@ export const getMe = async (): Promise<AuthUser | null> => {
     console.log(`[AUTH] error: ${error}`);
     return null;
   }
+};
+
+// Clears both providers' sessions regardless of which one is actually
+// active — cheaper and more robust than checking `provider` first, and
+// harmless to call the one that has nothing to clear.
+export const logout = async () => {
+  await Promise.allSettled([
+    fetch(`/api/auth/logout`, { method: "POST", credentials: "include" }),
+    authClient.signOut(),
+  ]);
 };
 

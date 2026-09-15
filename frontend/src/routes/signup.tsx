@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { authenticate, redirectToIrisSignup } from "#/services/auth";
+import { authClient } from "#/lib/auth-client";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/signup")({
@@ -31,9 +33,49 @@ function IrisIcon() {
   );
 }
 
+function GoogleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#FFC107"
+        d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.4-.4-3.5z"
+      />
+      <path
+        fill="#FF3D00"
+        d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3 16.3 3 9.7 7.4 6.3 14.7z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 45c5.5 0 10.4-2.1 14.1-5.6l-6.5-5.5C29.6 35.6 26.9 36.5 24 36.5c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.6 40.6 16.3 45 24 45z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.4l6.5 5.5C41.4 35.8 45 30.4 45 24c0-1.4-.1-2.4-.4-3.5z"
+      />
+    </svg>
+  );
+}
+
 function SignupPage() {
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   function handleSignup() {
     redirectToIrisSignup();
+  }
+
+  async function handleGoogleSignup() {
+    setGoogleLoading(true);
+    setError(null);
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+      });
+    } catch {
+      setError("Couldn't start Google sign-in. Please try again.");
+      setGoogleLoading(false);
+    }
   }
 
   return (
@@ -122,6 +164,27 @@ function SignupPage() {
           <IrisIcon />
           Sign up with Iris
         </button>
+
+        <div className="w-full flex items-center gap-3 mb-5">
+          <div className="flex-1 h-px bg-white/6" />
+          <span className="text-[10px] font-mono text-ink-3 uppercase tracking-widest">
+            or
+          </span>
+          <div className="flex-1 h-px bg-white/6" />
+        </div>
+
+        <button
+          onClick={handleGoogleSignup}
+          disabled={googleLoading}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-[9px] border border-white/[0.13] bg-white/[0.04] text-ink-1 text-[13px] font-medium hover:bg-white/[0.08] hover:border-white/20 hover:-translate-y-px active:translate-y-0 active:scale-[0.98] transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-green-acc disabled:opacity-50 disabled:cursor-not-allowed mb-5"
+        >
+          <GoogleIcon />
+          {googleLoading ? "Redirecting…" : "Continue with Google"}
+        </button>
+
+        {error && (
+          <p className="text-[11px] text-red-400 mb-4 text-center">{error}</p>
+        )}
 
         <p className="text-[11px] text-ink-3">
           Have an account?{" "}

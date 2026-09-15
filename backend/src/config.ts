@@ -8,6 +8,9 @@ const envSchema = z.object({
   FRONTEND_URL: z.url(),
   PORT: z.coerce.number().default(8080),
   DATABASE_URL: z.string(),
+  GOOGLE_CLIENT_ID: z.string().min(1),
+  GOOGLE_CLIENT_SECRET: z.string().min(1),
+  BETTER_AUTH_SECRET: z.string().min(1),
 });
 
 const env = envSchema.parse(process.env);
@@ -20,4 +23,7 @@ export const {
   FRONTEND_URL,
   PORT,
   DATABASE_URL,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  BETTER_AUTH_SECRET,
 } = env;

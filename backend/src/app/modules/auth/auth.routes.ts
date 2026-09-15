@@ -11,6 +11,7 @@ authRouter.get("/iris-login", AuthController.handleIrisLogin);
 authRouter.get("/iris-signup", AuthController.handleIrisSignup);
 authRouter.get("/callback", AuthController.handleCallback);
 authRouter.post("/refresh-token", AuthController.handleRefreshToken);
+authRouter.post("/logout", AuthController.handleLogout);
 authRouter.get(
   "/me",
   authenticate(),

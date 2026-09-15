@@ -1,14 +1,23 @@
 import express from "express";
 import type { NextFunction, Request, Response } from "express";
+import { toNodeHandler } from "better-auth/node";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRouter from "./modules/auth/auth.routes";
 import { FRONTEND_URL } from "../config";
 import pollRouter from "./modules/poll/poll.routes";
 import { ApiResponse } from "./common/utils";
+import { auth } from "../lib/auth";
 
 export function createApplication() {
   const app = express();
+
+  // Better Auth (Google sign-in) reads the raw request body itself, so its
+  // handler must be mounted before express.json() consumes the stream.
+  // Mounted at a base path distinct from /api/auth (Iris's routes) — Better
+  // Auth's handler never calls next(), so sharing that prefix would swallow
+  // Iris's own routes instead of falling through to them.
+  app.all("/api/better-auth/*splat", toNodeHandler(auth));
 
   app.use(express.json());
   app.use(

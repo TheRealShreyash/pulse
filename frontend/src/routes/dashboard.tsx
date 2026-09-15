@@ -6,7 +6,6 @@ import { Button } from "../components/ui/Button";
 import type { Poll, PollStatus } from "#/lib/types";
 import { getMe } from "#/services/auth";
 import { getUserPolls } from "#/services/poll";
-import { getInitials } from "#/lib/utils";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: async () => {
@@ -203,8 +202,7 @@ function Dashboard() {
       />
 
       <TopBar
-        showAvatar
-        initials={getInitials(userData.name)}
+        user={userData}
         right={
           <Link to="/create">
             <Button variant="accent" size="sm">
