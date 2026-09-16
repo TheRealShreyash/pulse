@@ -207,14 +207,11 @@ export default function LandingPage() {
         }
 
         .logo-icon {
-          width: 26px;
-          height: 26px;
-          background: var(--green-dim);
-          border: 1px solid rgba(74, 222, 128, 0.25);
-          border-radius: 7px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          width: 22px;
+          height: 22px;
+          border-radius: 6px;
+          object-fit: cover;
+          display: block;
         }
 
         .nav-links {
@@ -1037,19 +1034,7 @@ export default function LandingPage() {
       {/* Navigation */}
       <nav>
         <a href="#" className="nav-logo">
-          <div className="logo-icon">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <circle
-                cx="8"
-                cy="8"
-                r="6.5"
-                stroke="#4ade80"
-                strokeWidth="1.3"
-              />
-              <circle cx="8" cy="8" r="3" fill="#4ade80" fillOpacity="0.35" />
-              <circle cx="8" cy="8" r="1.3" fill="#4ade80" />
-            </svg>
-          </div>
+          <img src="/favicon.png" alt="" className="logo-icon" />
           Pulse
         </a>
         <ul className="nav-links">
@@ -1618,19 +1603,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer>
         <div className="footer-logo">
-          <div className="logo-icon">
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-              <circle
-                cx="8"
-                cy="8"
-                r="6.5"
-                stroke="#4ade80"
-                strokeWidth="1.3"
-              />
-              <circle cx="8" cy="8" r="3" fill="#4ade80" fillOpacity="0.3" />
-              <circle cx="8" cy="8" r="1.3" fill="#4ade80" />
-            </svg>
-          </div>
+          <img src="/favicon.png" alt="" className="logo-icon" />
           Pulse
         </div>
         <ul className="footer-links">

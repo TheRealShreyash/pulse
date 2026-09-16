@@ -97,56 +97,11 @@ function SignupPage() {
 
       {/* card */}
       <div className="relative z-10 w-full max-w-75 bg-bg-1/90 backdrop-blur-sm border border-white/9 rounded-[14px] p-7 flex flex-col items-center shadow-[0_20px_60px_rgba(0,0,0,0.4)] hover:border-green-bar/25 transition-colors duration-200 animate-fade-in-up">
-        {/* iris logo mark */}
-        <div className="w-9 h-9 rounded-[10px] bg-green-dim border border-green-bar/20 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(74,222,128,0.12)]">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 16 16"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle cx="8" cy="8" r="6.5" stroke="#4ade80" strokeWidth="1.3" />
-            <circle cx="8" cy="8" r="3" fill="#4ade80" fillOpacity="0.3" />
-            <circle cx="8" cy="8" r="1.3" fill="#4ade80" />
-            <line
-              x1="8"
-              y1="1"
-              x2="8"
-              y2="3"
-              stroke="#4ade80"
-              strokeWidth="1.2"
-              strokeLinecap="round"
-            />
-            <line
-              x1="8"
-              y1="13"
-              x2="8"
-              y2="15"
-              stroke="#4ade80"
-              strokeWidth="1.2"
-              strokeLinecap="round"
-            />
-            <line
-              x1="1"
-              y1="8"
-              x2="3"
-              y2="8"
-              stroke="#4ade80"
-              strokeWidth="1.2"
-              strokeLinecap="round"
-            />
-            <line
-              x1="13"
-              y1="8"
-              x2="15"
-              y2="8"
-              stroke="#4ade80"
-              strokeWidth="1.2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </div>
+        <img
+          src="/favicon.png"
+          alt=""
+          className="w-9 h-9 rounded-[10px] mb-4 shadow-[0_0_20px_rgba(74,222,128,0.12)]"
+        />
 
         <h1 className="text-[20px] font-bold text-ink-1 tracking-tight mb-1">
           Pulse
