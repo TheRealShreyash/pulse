@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, lt, sql } from "drizzle-orm";
 import { db } from "../../../db";
 import {
   optionsTable,
@@ -11,6 +11,32 @@ import { ApiError } from "../../common/utils";
 import type { CreatePollPayload, ResponsePayload } from "./poll.models";
 import { getRequestFingerprint } from "./utils/fingerprint";
 import { pollEmitter } from "../../../socket/emitter";
+
+// Polls have no background job flipping status to ENDED once expiresAt
+// passes — enforced lazily instead, at the points that actually matter
+// (voting, and viewing a poll's detail/list). The WHERE ... status="LIVE"
+// guard makes the UPDATE a no-op for whichever concurrent caller loses the
+// race, so pollClosed only ever emits once per poll.
+async function expireIfPastDue(poll: typeof pollsTable.$inferSelect) {
+  if (
+    poll.status === "LIVE" &&
+    poll.expiresAt &&
+    poll.expiresAt.getTime() < Date.now()
+  ) {
+    const [updated] = await db
+      .update(pollsTable)
+      .set({ status: "ENDED" })
+      .where(and(eq(pollsTable.id, poll.id), eq(pollsTable.status, "LIVE")))
+      .returning();
+
+    if (updated) {
+      pollEmitter.pollClosed(poll.id);
+      return updated;
+    }
+  }
+
+  return poll;
+}
 
 export const createPoll = async (
   payload: CreatePollPayload,
@@ -63,13 +89,15 @@ export const createPoll = async (
 export const getPoll = async (pollId: string, userId?: string) => {
   if (!pollId) throw ApiError.badRequest("No poll id provided");
 
-  const [poll] = await db
+  const [pollResult] = await db
     .select()
     .from(pollsTable)
     .where(eq(pollsTable.id, pollId))
     .limit(1);
 
-  if (!poll) throw ApiError.badRequest("Invalid poll id");
+  if (!pollResult) throw ApiError.badRequest("Invalid poll id");
+
+  const poll = await expireIfPastDue(pollResult);
 
   if (poll.status === "DRAFT" && poll.creatorId !== userId) {
     throw ApiError.forbidden("You do not have permission to view this draft");
@@ -111,6 +139,20 @@ export const getPoll = async (pollId: string, userId?: string) => {
 };
 
 export const getUserPolls = async (creatorId: string) => {
+  // One bulk lazy-expire pass so the dashboard list doesn't show a poll as
+  // LIVE past its expiry just because nobody has viewed/voted on it yet to
+  // trigger expireIfPastDue elsewhere.
+  await db
+    .update(pollsTable)
+    .set({ status: "ENDED" })
+    .where(
+      and(
+        eq(pollsTable.creatorId, creatorId),
+        eq(pollsTable.status, "LIVE"),
+        lt(pollsTable.expiresAt, new Date()),
+      ),
+    );
+
   const polls = await db
     .select({
       id: pollsTable.id,
@@ -168,19 +210,34 @@ export const respond = async (
   const { pollId, optionId } = payload;
   const fingerprint = getRequestFingerprint(req);
 
-  const [poll] = await db
+  const [pollResult] = await db
     .select()
     .from(pollsTable)
     .where(eq(pollsTable.id, pollId))
     .limit(1);
 
-  if (!poll) throw ApiError.badRequest("No poll found");
+  if (!pollResult) throw ApiError.badRequest("No poll found");
+
+  const poll = await expireIfPastDue(pollResult);
+
   if (poll.status !== "LIVE")
     throw ApiError.forbidden("This poll is not accepting votes");
 
   if (!poll.isAnonymous && !userId) {
     throw ApiError.unauthorized("Sign in required to vote");
   }
+
+  // optionsTable.id is only unique globally, not scoped to a poll — without
+  // this, a client could submit an optionId belonging to a different poll
+  // entirely and it would insert silently (the FK only checks the option
+  // exists somewhere), corrupting that other poll's vote counts.
+  const [option] = await db
+    .select({ id: optionsTable.id })
+    .from(optionsTable)
+    .where(and(eq(optionsTable.id, optionId), eq(optionsTable.pollId, pollId)))
+    .limit(1);
+
+  if (!option) throw ApiError.badRequest("Invalid option for this poll");
 
   const existingVote = await db
     .select()
