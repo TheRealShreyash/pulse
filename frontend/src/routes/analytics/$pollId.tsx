@@ -43,6 +43,20 @@ function timeLeft(iso: string): string {
   return h > 0 ? `${h}h ${m}m remaining` : `${m}m remaining`;
 }
 
+function formatHourAgo(iso: string): string {
+  const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3_600_000);
+  return h <= 0 ? "now" : `${h}h ago`;
+}
+
+// The velocity series is already computed server-side (hourly vote counts)
+// — the peak is just the max of data already on hand, no extra request.
+function peakVelocity(
+  velocity: { hour: string; count: number }[],
+): { hour: string; count: number } | null {
+  if (velocity.length === 0) return null;
+  return velocity.reduce((max, v) => (v.count > max.count ? v : max));
+}
+
 function StatCard({ value, label }: { value: string; label: string }) {
   return (
     <div className="bg-bg-2 border border-white/6 rounded-lg px-3 py-2.5 hover-lift hover:border-green-bar/20">
@@ -72,6 +86,11 @@ function AnalyticsPage() {
   const counts = data.options.map((o) => o.count);
   const pcts = calcPcts(counts);
   const leadingIdx = pcts.indexOf(Math.max(...pcts));
+  const peak = peakVelocity(data.velocity);
+  const { authenticated, anonymous } = data.authBreakdown;
+  const authPct = authenticated + anonymous > 0
+    ? Math.round((authenticated / (authenticated + anonymous)) * 100)
+    : 0;
 
   // socket handlers
   usePollSocket({
@@ -86,6 +105,9 @@ function AnalyticsPage() {
     },
     onPollClosed: () => {
       setData((prev) => ({ ...prev, status: "ENDED" }));
+    },
+    onPollPublished: () => {
+      setData((prev) => ({ ...prev, status: "PUBLISHED" }));
     },
   });
 
@@ -149,6 +171,8 @@ function AnalyticsPage() {
             {data.isAnonymous && (
               <span className="text-[11px] font-mono text-ink-3">
                 · Anonymous
+                {data.totalResponses > 0 &&
+                  ` · ${authPct}% signed in, ${100 - authPct}% anonymous`}
               </span>
             )}
             {isActive && data.expiresAt && (
@@ -192,10 +216,17 @@ function AnalyticsPage() {
 
         {/* Velocity chart */}
         <section className="mb-8">
-          <p className="flex items-center gap-2 text-[10px] font-mono font-medium text-green-acc uppercase tracking-widest mb-3">
-            <span aria-hidden="true" className="w-4 h-px bg-green-acc opacity-60" />
-            Response velocity
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="flex items-center gap-2 text-[10px] font-mono font-medium text-green-acc uppercase tracking-widest">
+              <span aria-hidden="true" className="w-4 h-px bg-green-acc opacity-60" />
+              Response velocity
+            </p>
+            {peak && peak.count > 0 && (
+              <span className="text-[11px] font-mono text-ink-3">
+                Peak: {peak.count} at {formatHourAgo(peak.hour)}
+              </span>
+            )}
+          </div>
           <div className="bg-bg-2 border border-white/6 rounded-lg p-4">
             <Sparkline data={data.velocity} />
           </div>
