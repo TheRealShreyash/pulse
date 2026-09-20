@@ -20,9 +20,15 @@ export interface Poll {
   totalResponses?: number;
 }
 
+export interface AuthBreakdown {
+  authenticated: number;
+  anonymous: number;
+}
+
 export interface PollWithOptions extends Poll {
   options: PollOption[];
   totalResponses: number;
+  authBreakdown: AuthBreakdown;
 }
 
 export interface VelocityPoint {

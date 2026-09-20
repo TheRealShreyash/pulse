@@ -4,6 +4,7 @@ import {
   EVENTS,
   type VoteUpdatePayload,
   type PollClosedPayload,
+  type PollPublishedPayload,
 } from "../lib/socket";
 
 interface UsePollSocketOptions {
@@ -11,6 +12,7 @@ interface UsePollSocketOptions {
   enabled: boolean;
   onVoteUpdate?: (payload: VoteUpdatePayload) => void;
   onPollClosed?: (payload: PollClosedPayload) => void;
+  onPollPublished?: (payload: PollPublishedPayload) => void;
 }
 
 export function usePollSocket({
@@ -18,6 +20,7 @@ export function usePollSocket({
   enabled,
   onVoteUpdate,
   onPollClosed,
+  onPollPublished,
 }: UsePollSocketOptions) {
   useEffect(() => {
     if (!enabled) return;
@@ -39,13 +42,20 @@ export function usePollSocket({
       onPollClosed?.(payload);
     }
 
+    function handlePollPublished(payload: PollPublishedPayload) {
+      if (payload.pollId !== pollId) return;
+      onPollPublished?.(payload);
+    }
+
     socket.on(EVENTS.VOTE_UPDATE, handleVoteUpdate);
     socket.on(EVENTS.POLL_CLOSED, handlePollClosed);
+    socket.on(EVENTS.POLL_PUBLISHED, handlePollPublished);
 
     return () => {
       socket.emit(EVENTS.LEAVE_POLL, { pollId });
       socket.off(EVENTS.VOTE_UPDATE, handleVoteUpdate);
       socket.off(EVENTS.POLL_CLOSED, handlePollClosed);
+      socket.off(EVENTS.POLL_PUBLISHED, handlePollPublished);
 
       socket.disconnect();
     };

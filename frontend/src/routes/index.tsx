@@ -16,7 +16,7 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
 });
 
-export default function LandingPage() {
+function LandingPage() {
   const barsRef = useRef<(HTMLDivElement | null)[]>([]);
   const voteCounterRef = useRef<HTMLSpanElement>(null);
   const miniBarsRef = useRef<HTMLDivElement>(null);

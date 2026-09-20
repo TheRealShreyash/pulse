@@ -14,6 +14,7 @@ export const EVENTS = {
   // server → client
   VOTE_UPDATE: "server:poll:update",
   POLL_CLOSED: "server:poll:closed",
+  POLL_PUBLISHED: "server:poll:published",
 } as const;
 
 export interface JoinPollPayload {
@@ -30,5 +31,9 @@ export interface VoteUpdatePayload {
 }
 
 export interface PollClosedPayload {
+  pollId: string;
+}
+
+export interface PollPublishedPayload {
   pollId: string;
 }

@@ -105,7 +105,7 @@ export const getPoll = async (pollId: string, userId?: string) => {
     throw ApiError.forbidden("You do not have permission to view this draft");
   }
 
-  const [options, voteResult, velocity] = await Promise.all([
+  const [options, breakdownResult, velocity] = await Promise.all([
     db
       .select({
         id: optionsTable.id,
@@ -119,8 +119,15 @@ export const getPoll = async (pollId: string, userId?: string) => {
       .groupBy(optionsTable.id)
       .orderBy(asc(optionsTable.displayOrder)),
 
+    // Same query gives both the auth/anon split and the total (their sum),
+    // replacing what used to be a separate count-only query — a logged-in
+    // user can still vote on an anonymous poll, so this split is genuinely
+    // meaningful there rather than a trivial 100/0.
     db
-      .select({ count: sql<number>`cast(count(*) as int)` })
+      .select({
+        authenticated: sql<number>`cast(count(*) filter (where ${votesTable.userId} is not null) as int)`,
+        anonymous: sql<number>`cast(count(*) filter (where ${votesTable.userId} is null) as int)`,
+      })
       .from(votesTable)
       .where(eq(votesTable.pollId, poll.id)),
 
@@ -135,9 +142,13 @@ export const getPoll = async (pollId: string, userId?: string) => {
       .orderBy(sql`date_trunc('hour', ${votesTable.createdAt})`),
   ]);
 
-  const totalResponses = voteResult[0]?.count ?? 0;
+  const authBreakdown = {
+    authenticated: breakdownResult[0]?.authenticated ?? 0,
+    anonymous: breakdownResult[0]?.anonymous ?? 0,
+  };
+  const totalResponses = authBreakdown.authenticated + authBreakdown.anonymous;
 
-  return { ...poll, options, totalResponses, velocity };
+  return { ...poll, options, totalResponses, velocity, authBreakdown };
 };
 
 export const getUserPolls = async (creatorId: string) => {
@@ -188,6 +199,8 @@ export const updatePoll = async (pollId: string, creatorId: string) => {
     .returning();
 
   if (!poll) throw ApiError.notFound("No poll found with that id");
+
+  pollEmitter.pollPublished(pollId);
 
   return poll;
 };

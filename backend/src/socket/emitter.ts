@@ -13,4 +13,7 @@ export const pollEmitter = {
   pollClosed(pollId: string) {
     _io.to(pollId).emit("server:poll:closed", { pollId });
   },
+  pollPublished(pollId: string) {
+    _io.to(pollId).emit("server:poll:published", { pollId });
+  },
 };

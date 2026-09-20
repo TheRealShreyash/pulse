@@ -72,6 +72,8 @@ function PollPage() {
       }));
     },
     onPollClosed: () => setPoll((prev) => ({ ...prev, status: "ENDED" })),
+    onPollPublished: () =>
+      setPoll((prev) => ({ ...prev, status: "PUBLISHED" })),
   });
 
   async function handleVote() {
