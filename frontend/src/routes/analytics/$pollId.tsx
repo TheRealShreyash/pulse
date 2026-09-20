@@ -8,7 +8,7 @@ import { AnalyticsBar } from "../../components/poll/AnalyticsBar";
 import { Sparkline } from "../../components/poll/Sparkline";
 import { usePollSocket } from "#/hooks/usePollSocket";
 import { type AnalyticsPoll } from "#/lib/types";
-import { closePoll, getPoll, publishPoll } from "#/services/poll";
+import { closePoll, exportPollCsv, getPoll, publishPoll } from "#/services/poll";
 import { authenticate } from "#/services/auth";
 
 export const Route = createFileRoute("/analytics/$pollId")({
@@ -73,12 +73,14 @@ function StatCard({ value, label }: { value: string; label: string }) {
 function AnalyticsPage() {
   const { pollId } = Route.useParams();
   const initialData = Route.useLoaderData();
-  const shareUrl = `${window.location.origin}/poll/${initialData.id}`;
+  const shareUrl = `${window.location.origin}/poll/${initialData.slug ?? initialData.id}`;
 
   const [data, setData] = useState<AnalyticsPoll>(initialData);
   const [publishing, setPublishing] = useState(false);
   const [closing, setClosing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const isActive = data.status === "LIVE";
   const isPublished = data.status === "PUBLISHED";
@@ -136,6 +138,18 @@ function AnalyticsPage() {
     navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function handleExport() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      await exportPollCsv(data.id);
+    } catch (e) {
+      setExportError(e instanceof Error ? e.message : "Failed to export CSV");
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
@@ -234,7 +248,7 @@ function AnalyticsPage() {
 
         {/* Actions footer */}
         <div className="flex items-center justify-between pt-4 border-t border-white/[0.07]">
-          <div>
+          <div className="flex items-center gap-2">
             {isActive && (
               <Button
                 variant="ghost"
@@ -245,6 +259,14 @@ function AnalyticsPage() {
                 {closing ? "Closing…" : "Close poll"}
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleExport}
+              disabled={exporting}
+            >
+              {exporting ? "Exporting…" : "Export CSV"}
+            </Button>
           </div>
 
           <div className="flex items-center gap-4">
@@ -287,6 +309,12 @@ function AnalyticsPage() {
             )}
           </div>
         </div>
+
+        {exportError && (
+          <p className="text-[11px] text-red-400 mt-3 text-right">
+            {exportError}
+          </p>
+        )}
       </main>
     </div>
   );

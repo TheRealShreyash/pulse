@@ -39,6 +39,11 @@ export const pollsTable = pgTable("polls", {
   showLiveResults: boolean("show_live_results").notNull().default(true),
   expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  // Nullable and generated only for new polls going forward — existing
+  // polls keep working via their id alone, no backfill needed. Postgres
+  // allows multiple NULLs under a unique constraint (same pattern already
+  // used for votesTable's fingerprint column).
+  slug: varchar("slug", { length: 32 }).unique(),
 });
 
 export const optionsTable = pgTable("options", {

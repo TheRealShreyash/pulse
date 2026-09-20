@@ -10,8 +10,11 @@ import type { Request } from "express";
 import { ApiError } from "../../common/utils";
 import type { CreatePollPayload, ResponsePayload } from "./poll.models";
 import { getRequestFingerprint } from "./utils/fingerprint";
-import { isValidUUID } from "./utils/validate-uuid";
+import { generateSlug } from "./utils/generate-slug";
+import { resolvePoll } from "./utils/resolve-poll";
 import { pollEmitter } from "../../../socket/emitter";
+
+const MAX_SLUG_ATTEMPTS = 5;
 
 // Polls have no background job flipping status to ENDED once expiresAt
 // passes — enforced lazily instead, at the points that actually matter
@@ -61,18 +64,27 @@ export const createPoll = async (
 
   if (!creator) throw ApiError.badRequest("User does not exist!");
 
-  const [poll] = await db
-    .insert(pollsTable)
-    .values({
-      creatorId,
-      title,
-      description,
-      status,
-      isAnonymous,
-      showLiveResults,
-      expiresAt: expiresAt ? new Date(expiresAt) : null,
-    })
-    .returning();
+  let poll: typeof pollsTable.$inferSelect | undefined;
+  for (let attempt = 0; attempt < MAX_SLUG_ATTEMPTS && !poll; attempt++) {
+    try {
+      [poll] = await db
+        .insert(pollsTable)
+        .values({
+          creatorId,
+          title,
+          description,
+          status,
+          isAnonymous,
+          showLiveResults,
+          expiresAt: expiresAt ? new Date(expiresAt) : null,
+          slug: generateSlug(),
+        })
+        .returning();
+    } catch (err: any) {
+      // Only retry a genuine slug collision — anything else is a real error.
+      if (err?.code !== "23505" || attempt === MAX_SLUG_ATTEMPTS - 1) throw err;
+    }
+  }
 
   if (!poll) throw ApiError.internalError("Internal server error");
 
@@ -87,16 +99,10 @@ export const createPoll = async (
   return poll;
 };
 
-export const getPoll = async (pollId: string, userId?: string) => {
-  if (!pollId) throw ApiError.badRequest("No poll id provided");
-  if (!isValidUUID(pollId)) throw ApiError.badRequest("Invalid poll id");
+export const getPoll = async (pollIdOrSlug: string, userId?: string) => {
+  if (!pollIdOrSlug) throw ApiError.badRequest("No poll id provided");
 
-  const [pollResult] = await db
-    .select()
-    .from(pollsTable)
-    .where(eq(pollsTable.id, pollId))
-    .limit(1);
-
+  const pollResult = await resolvePoll(pollIdOrSlug);
   if (!pollResult) throw ApiError.badRequest("Invalid poll id");
 
   const poll = await expireIfPastDue(pollResult);
@@ -176,6 +182,7 @@ export const getUserPolls = async (creatorId: string) => {
       showLiveResults: pollsTable.showLiveResults,
       expiresAt: pollsTable.expiresAt,
       createdAt: pollsTable.createdAt,
+      slug: pollsTable.slug,
       totalResponses: sql<number>`cast(count(${votesTable.id}) as int)`,
     })
     .from(pollsTable)
@@ -189,34 +196,74 @@ export const getUserPolls = async (creatorId: string) => {
   return polls;
 };
 
-export const updatePoll = async (pollId: string, creatorId: string) => {
-  if (!isValidUUID(pollId)) throw ApiError.badRequest("Invalid poll id");
+// Aggregate summary only (option, votes, percentage) — deliberately not
+// per-vote rows. A per-vote export is really the individual-response-
+// viewing feature in CSV form, which needs its own privacy pass first.
+export const exportPollCsv = async (pollIdOrSlug: string, creatorId: string) => {
+  if (!pollIdOrSlug) throw ApiError.badRequest("No poll id provided");
+
+  const poll = await resolvePoll(pollIdOrSlug);
+  if (!poll) throw ApiError.notFound("No poll found with that id");
+  if (poll.creatorId !== creatorId) {
+    throw ApiError.forbidden("You do not have permission to export this poll");
+  }
+
+  const options = await db
+    .select({
+      text: optionsTable.text,
+      count: sql<number>`cast(count(${votesTable.id}) as int)`,
+    })
+    .from(optionsTable)
+    .leftJoin(votesTable, eq(votesTable.optionId, optionsTable.id))
+    .where(eq(optionsTable.pollId, poll.id))
+    .groupBy(optionsTable.id)
+    .orderBy(asc(optionsTable.displayOrder));
+
+  const total = options.reduce((sum, o) => sum + o.count, 0);
+
+  const rows = options.map((o) => ({
+    option: o.text,
+    votes: o.count,
+    percentage: total > 0 ? `${Math.round((o.count / total) * 100)}%` : "0%",
+  }));
+
+  return { title: poll.title, rows };
+};
+
+export const updatePoll = async (pollIdOrSlug: string, creatorId: string) => {
+  const existing = await resolvePoll(pollIdOrSlug);
+  if (!existing) throw ApiError.notFound("No poll found with that id");
 
   const [poll] = await db
     .update(pollsTable)
     .set({ status: "PUBLISHED" })
-    .where(and(eq(pollsTable.id, pollId), eq(pollsTable.creatorId, creatorId)))
+    .where(
+      and(eq(pollsTable.id, existing.id), eq(pollsTable.creatorId, creatorId)),
+    )
     .returning();
 
   if (!poll) throw ApiError.notFound("No poll found with that id");
 
-  pollEmitter.pollPublished(pollId);
+  pollEmitter.pollPublished(poll.id);
 
   return poll;
 };
 
-export const closePoll = async (pollId: string, creatorId: string) => {
-  if (!isValidUUID(pollId)) throw ApiError.badRequest("Invalid poll id");
+export const closePoll = async (pollIdOrSlug: string, creatorId: string) => {
+  const existing = await resolvePoll(pollIdOrSlug);
+  if (!existing) throw ApiError.notFound("No poll found with that id");
 
   const [poll] = await db
     .update(pollsTable)
     .set({ status: "ENDED" })
-    .where(and(eq(pollsTable.id, pollId), eq(pollsTable.creatorId, creatorId)))
+    .where(
+      and(eq(pollsTable.id, existing.id), eq(pollsTable.creatorId, creatorId)),
+    )
     .returning();
 
   if (!poll) throw ApiError.notFound("No poll found with that id");
 
-  pollEmitter.pollClosed(pollId);
+  pollEmitter.pollClosed(poll.id);
 
   return poll;
 };
@@ -226,15 +273,10 @@ export const respond = async (
   payload: ResponsePayload,
   userId: string | null,
 ) => {
-  const { pollId, optionId } = payload;
+  const { pollId: pollIdOrSlug, optionId } = payload;
   const fingerprint = getRequestFingerprint(req);
 
-  const [pollResult] = await db
-    .select()
-    .from(pollsTable)
-    .where(eq(pollsTable.id, pollId))
-    .limit(1);
-
+  const pollResult = await resolvePoll(pollIdOrSlug);
   if (!pollResult) throw ApiError.badRequest("No poll found");
 
   const poll = await expireIfPastDue(pollResult);
@@ -253,7 +295,7 @@ export const respond = async (
   const [option] = await db
     .select({ id: optionsTable.id })
     .from(optionsTable)
-    .where(and(eq(optionsTable.id, optionId), eq(optionsTable.pollId, pollId)))
+    .where(and(eq(optionsTable.id, optionId), eq(optionsTable.pollId, poll.id)))
     .limit(1);
 
   if (!option) throw ApiError.badRequest("Invalid option for this poll");
@@ -263,7 +305,7 @@ export const respond = async (
     .from(votesTable)
     .where(
       and(
-        eq(votesTable.pollId, pollId),
+        eq(votesTable.pollId, poll.id),
         userId
           ? eq(votesTable.userId, userId)
           : eq(votesTable.fingerprint, fingerprint ?? ""),
@@ -309,10 +351,11 @@ export const respond = async (
 
 export const hasVoted = async (
   req: Request,
-  pollId: string,
+  pollIdOrSlug: string,
   userId: string | null,
 ) => {
-  if (!isValidUUID(pollId)) throw ApiError.badRequest("Invalid poll id");
+  const poll = await resolvePoll(pollIdOrSlug);
+  if (!poll) throw ApiError.badRequest("Invalid poll id");
 
   const fingerprint = getRequestFingerprint(req);
 
@@ -321,7 +364,7 @@ export const hasVoted = async (
     .from(votesTable)
     .where(
       and(
-        eq(votesTable.pollId, pollId),
+        eq(votesTable.pollId, poll.id),
         userId
           ? eq(votesTable.userId, userId)
           : eq(votesTable.fingerprint, fingerprint ?? ""),

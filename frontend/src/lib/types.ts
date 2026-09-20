@@ -18,6 +18,7 @@ export interface Poll {
   expiresAt: string | null;
   createdAt: string;
   totalResponses?: number;
+  slug: string | null;
 }
 
 export interface AuthBreakdown {

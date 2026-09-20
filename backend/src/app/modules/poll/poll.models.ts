@@ -11,7 +11,9 @@ export const createPollPayloadModel = z.object({
 });
 
 export const responsePayloadModel = z.object({
-  pollId: z.uuid(),
+  // Can be a poll's raw id or its slug (resolvePoll handles telling them
+  // apart) — optionId stays a strict uuid, options are never exposed by slug.
+  pollId: z.string().min(1).max(40),
   optionId: z.uuid(),
 });
 
