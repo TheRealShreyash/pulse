@@ -11,8 +11,8 @@ export const createPollPayloadModel = z.object({
 });
 
 export const responsePayloadModel = z.object({
-  pollId: z.string(),
-  optionId: z.string(),
+  pollId: z.uuid(),
+  optionId: z.uuid(),
 });
 
 export type CreatePollPayload = z.infer<typeof createPollPayloadModel>;

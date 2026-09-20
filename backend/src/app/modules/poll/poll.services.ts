@@ -10,6 +10,7 @@ import type { Request } from "express";
 import { ApiError } from "../../common/utils";
 import type { CreatePollPayload, ResponsePayload } from "./poll.models";
 import { getRequestFingerprint } from "./utils/fingerprint";
+import { isValidUUID } from "./utils/validate-uuid";
 import { pollEmitter } from "../../../socket/emitter";
 
 // Polls have no background job flipping status to ENDED once expiresAt
@@ -88,6 +89,7 @@ export const createPoll = async (
 
 export const getPoll = async (pollId: string, userId?: string) => {
   if (!pollId) throw ApiError.badRequest("No poll id provided");
+  if (!isValidUUID(pollId)) throw ApiError.badRequest("Invalid poll id");
 
   const [pollResult] = await db
     .select()
@@ -177,6 +179,8 @@ export const getUserPolls = async (creatorId: string) => {
 };
 
 export const updatePoll = async (pollId: string, creatorId: string) => {
+  if (!isValidUUID(pollId)) throw ApiError.badRequest("Invalid poll id");
+
   const [poll] = await db
     .update(pollsTable)
     .set({ status: "PUBLISHED" })
@@ -189,6 +193,8 @@ export const updatePoll = async (pollId: string, creatorId: string) => {
 };
 
 export const closePoll = async (pollId: string, creatorId: string) => {
+  if (!isValidUUID(pollId)) throw ApiError.badRequest("Invalid poll id");
+
   const [poll] = await db
     .update(pollsTable)
     .set({ status: "ENDED" })
@@ -293,6 +299,8 @@ export const hasVoted = async (
   pollId: string,
   userId: string | null,
 ) => {
+  if (!isValidUUID(pollId)) throw ApiError.badRequest("Invalid poll id");
+
   const fingerprint = getRequestFingerprint(req);
 
   const [vote] = await db

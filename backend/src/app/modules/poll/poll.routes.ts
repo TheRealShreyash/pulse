@@ -7,11 +7,16 @@ import {
   pollAuthenticate,
   restrictToAuthenticatedUser,
 } from "../../common/middlewares/authenticate.middleware";
+import {
+  voteLimiter,
+  createPollLimiter,
+} from "../../common/middlewares/rate-limit.middleware";
 
 const pollRouter = Router();
 
 pollRouter.post(
   "/create",
+  createPollLimiter,
   authenticate(),
   restrictToAuthenticatedUser(),
   validate(createPollPayloadModel),
@@ -47,6 +52,7 @@ pollRouter.patch(
 
 pollRouter.post(
   "/respond",
+  voteLimiter,
   pollAuthenticate(),
   validate(responsePayloadModel),
   PollController.handleRespond,
