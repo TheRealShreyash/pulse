@@ -48,7 +48,7 @@ function PollRow({ poll }: { poll: Poll }) {
     e.preventDefault();
     e.stopPropagation();
     await navigator.clipboard.writeText(
-      `${window.location.origin}/poll/${poll.id}`,
+      `${window.location.origin}/poll/${poll.slug ?? poll.id}`,
     );
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
@@ -126,7 +126,7 @@ function PollRow({ poll }: { poll: Poll }) {
         )}
 
         {/* Analytics icon */}
-        {(poll.status === "LIVE" || poll.status === "ENDED") && (
+        {poll.status !== "DRAFT" && (
           <Link
             to="/analytics/$pollId"
             params={{ pollId: poll.id }}
