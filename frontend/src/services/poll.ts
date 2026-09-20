@@ -120,6 +120,28 @@ export const respondToPoll = async (payload: ResponsePayload) => {
   return data;
 };
 
+export const exportPollCsv = async (pollId: string): Promise<void> => {
+  const response = await fetch(`/api/poll/export?id=${pollId}`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.message ?? "Failed to export poll");
+  }
+
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? "poll.csv";
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
 export const checkVote = async (pollId: string): Promise<boolean> => {
   const response = await fetch(`/api/poll/has-voted?id=${pollId}`, {
     credentials: "include",

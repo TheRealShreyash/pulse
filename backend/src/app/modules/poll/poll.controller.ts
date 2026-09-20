@@ -3,12 +3,14 @@ import { ApiError, ApiResponse } from "../../common/utils";
 import {
   closePoll,
   createPoll,
+  exportPollCsv,
   getPoll,
   getUserPolls,
   hasVoted,
   respond,
   updatePoll,
 } from "./poll.services";
+import { toCsv } from "./utils/csv";
 import type { AuthenticatedRequest } from "../../common/utils/interfaces";
 
 export default class PollController {
@@ -89,6 +91,30 @@ export default class PollController {
       const userId = req.user?.sub ?? null;
       const voted = await hasVoted(req, pollId, userId);
       ApiResponse.ok(res, "Vote status", { voted });
+    } catch (error) {
+      ApiResponse.error(res, error);
+    }
+  }
+
+  static async handleExportCsv(req: AuthenticatedRequest, res: Response) {
+    try {
+      const pollId = req.query.id as string;
+      const creatorId = req.user!.sub;
+
+      const { title, rows } = await exportPollCsv(pollId, creatorId);
+      const filename =
+        title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 60) || "poll";
+
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${filename}.csv"`,
+      );
+      res.send(toCsv(rows));
     } catch (error) {
       ApiResponse.error(res, error);
     }

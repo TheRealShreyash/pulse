@@ -60,4 +60,11 @@ pollRouter.post(
 
 pollRouter.get('/has-voted', pollAuthenticate(), PollController.handleHasVoted)
 
+pollRouter.get(
+  "/export",
+  authenticate(),
+  restrictToAuthenticatedUser(),
+  PollController.handleExportCsv,
+);
+
 export default pollRouter;
