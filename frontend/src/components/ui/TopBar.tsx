@@ -59,6 +59,26 @@ function ProfileMenu({ user }: { user: AuthUser }) {
               </span>
             )}
           </div>
+          <Link
+            to="/settings"
+            onClick={() => setOpen(false)}
+            className="w-full flex items-center gap-2 px-3.5 py-2.5 text-[12px] text-ink-2 hover:text-ink-1 hover:bg-white/[0.04] transition-colors"
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path
+                d="M8 10.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"
+                stroke="currentColor"
+                strokeWidth="1.3"
+              />
+              <path
+                d="M13 8.5v-1l-1.3-.2a4.4 4.4 0 0 0-.5-1.2l.8-1.1-.7-.7-1.1.8a4.4 4.4 0 0 0-1.2-.5L8.8 3h-1l-.2 1.3a4.4 4.4 0 0 0-1.2.5l-1.1-.8-.7.7.8 1.1a4.4 4.4 0 0 0-.5 1.2L3.5 7.5v1l1.3.2c.1.4.3.8.5 1.2l-.8 1.1.7.7 1.1-.8c.4.2.8.4 1.2.5l.2 1.3h1l.2-1.3c.4-.1.8-.3 1.2-.5l1.1.8.7-.7-.8-1.1c.2-.4.4-.8.5-1.2l1.3-.2Z"
+                stroke="currentColor"
+                strokeWidth="1.1"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Settings
+          </Link>
           <button
             onClick={handleLogout}
             disabled={loggingOut}

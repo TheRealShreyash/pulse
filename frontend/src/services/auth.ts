@@ -58,6 +58,23 @@ export const getMe = async (): Promise<AuthUser | null> => {
   }
 };
 
+export const updateUsername = async (username: string): Promise<string> => {
+  const response = await fetch(`/api/auth/username`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ username }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.message ?? "Failed to update username");
+  }
+
+  const { data } = await response.json();
+  return data.username;
+};
+
 // Clears both providers' sessions regardless of which one is actually
 // active — cheaper and more robust than checking `provider` first, and
 // harmless to call the one that has nothing to clear.

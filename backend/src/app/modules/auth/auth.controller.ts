@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { eq } from "drizzle-orm";
 import {
   CLIENT_ID,
   FRONTEND_URL,
@@ -6,7 +7,14 @@ import {
   NODE_ENV,
 } from "../../../config";
 import { ApiError, ApiResponse } from "../../common/utils";
-import { callback, refreshTokens, registerUser } from "./auth.services";
+import { db } from "../../../db";
+import { usersTable } from "../../../db/schema";
+import {
+  callback,
+  refreshTokens,
+  registerUser,
+  updateUsername,
+} from "./auth.services";
 import { verifyAccessToken } from "./utils/token";
 import type { AuthenticatedRequest } from "../../common/utils/interfaces";
 
@@ -27,7 +35,20 @@ function authCookieOptions(maxAge: number) {
 export class AuthController {
   static async handleMe(req: AuthenticatedRequest, res: Response) {
     try {
-      ApiResponse.ok(res, "Me", req.user);
+      // req.user.name comes straight from whichever provider signed this
+      // session (Iris's JWT claim, or Better Auth's own copy) — neither
+      // reflects an edited username on its own. This is the one endpoint
+      // that actually populates the name shown across the app (TopBar,
+      // dashboard), so it's the one place worth the extra lookup, rather
+      // than adding it to the shared middleware every route goes through.
+      const [user] = await db
+        .select({ username: usersTable.username })
+        .from(usersTable)
+        .where(eq(usersTable.id, req.user!.sub))
+        .limit(1);
+
+      const me = user ? { ...req.user, name: user.username } : req.user;
+      ApiResponse.ok(res, "Me", me);
     } catch (error) {
       ApiResponse.error(res, error);
     }
@@ -109,6 +130,16 @@ export class AuthController {
   static async handleUserInfo(req: AuthenticatedRequest, res: Response) {
     try {
       ApiResponse.ok(res, "Userinfo through token", req.user!);
+    } catch (error) {
+      ApiResponse.error(res, error);
+    }
+  }
+
+  static async handleUpdateUsername(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { username } = req.body;
+      const user = await updateUsername(req.user!.sub, username);
+      ApiResponse.ok(res, "Username updated", { username: user.username });
     } catch (error) {
       ApiResponse.error(res, error);
     }

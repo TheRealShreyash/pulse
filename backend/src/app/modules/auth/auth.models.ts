@@ -12,3 +12,9 @@ export const userTokenPayloadModel = z.object({
 });
 
 export type UserTokenPayload = z.infer<typeof userTokenPayloadModel>;
+
+export const updateUsernamePayloadModel = z.object({
+  username: z.string().min(1).max(45),
+});
+
+export type UpdateUsernamePayload = z.infer<typeof updateUsernamePayloadModel>;

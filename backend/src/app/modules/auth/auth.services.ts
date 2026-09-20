@@ -90,3 +90,25 @@ export const registerUser = async (payload: any) => {
 
   if (!user) throw ApiError.internalError("Internal server error");
 };
+
+export const updateUsername = async (userId: string, username: string) => {
+  const [user] = await db
+    .update(usersTable)
+    .set({ username })
+    .where(eq(usersTable.id, userId))
+    .returning();
+
+  if (!user) throw ApiError.notFound("User not found");
+
+  // Keeps a linked Google session in sync immediately — Better Auth reads
+  // name fresh from its own user table on every session check, so this
+  // takes effect on the very next request without touching auth middleware.
+  // An Iris session can't be updated this way (the name is baked into an
+  // already-issued JWT); it catches up on next login instead.
+  await db
+    .update(betterAuthUsersTable)
+    .set({ name: username })
+    .where(eq(betterAuthUsersTable.pulseUserId, userId));
+
+  return user;
+};

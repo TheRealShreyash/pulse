@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { AuthController } from "./auth.controller";
+import validate from "../../common/middlewares/validate.middleware";
+import { updateUsernamePayloadModel } from "./auth.models";
 import {
   authenticate,
   restrictToAuthenticatedUser,
@@ -17,6 +19,13 @@ authRouter.get(
   authenticate(),
   restrictToAuthenticatedUser(),
   AuthController.handleMe,
+);
+authRouter.patch(
+  "/username",
+  authenticate(),
+  restrictToAuthenticatedUser(),
+  validate(updateUsernamePayloadModel),
+  AuthController.handleUpdateUsername,
 );
 authRouter.post(
   "/userinfo",
