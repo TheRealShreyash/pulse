@@ -1,28 +1,22 @@
-import JWT from "jsonwebtoken";
-import JwksClient from "jwks-rsa";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { UserTokenPayload } from "../auth.models";
 import { IRIS_AUTH_URL } from "../../../../config";
 
-const client = JwksClient({
-  jwksUri: `${IRIS_AUTH_URL}/auth/certs`,
-  cache: true,
+const JWKS = createRemoteJWKSet(new URL(`${IRIS_AUTH_URL}/auth/certs`), {
   cacheMaxAge: 24 * 60 * 60 * 1000, // 24 hours, in ms
 });
 
 export async function verifyAccessToken(token: string) {
-  const decoded = JWT.decode(token, { complete: true });
-  const key = await client.getSigningKey(decoded?.header.kid);
-  const publicKey = key.getPublicKey();
-  return JWT.verify(token, publicKey, {
+  const { payload } = await jwtVerify(token, JWKS, {
     algorithms: ["RS256"],
-  }) as UserTokenPayload;
+  });
+  return payload as unknown as UserTokenPayload;
 }
 
 export async function verifyRefreshToken(token: string) {
-  const decoded = JWT.decode(token, { complete: true });
-  const key = await client.getSigningKey(decoded?.header.kid);
-  const publicKey = key.getPublicKey();
-  return JWT.verify(token, publicKey, {
+  const { payload } = await jwtVerify(token, JWKS, {
     algorithms: ["RS256"],
-  }) as { id: string };
+  });
+  return payload as unknown as { id: string };
 }
+
