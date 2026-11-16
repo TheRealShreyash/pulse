@@ -6,6 +6,7 @@ import { Button } from "../../components/ui/Button";
 import { LiveDot } from "../../components/poll/LiveDot";
 import { AnalyticsBar } from "../../components/poll/AnalyticsBar";
 import { Sparkline } from "../../components/poll/Sparkline";
+import { PollQRCodeCard } from "../../components/poll/PollQRCodeCard";
 import { usePollSocket } from "#/hooks/usePollSocket";
 import { type AnalyticsPoll } from "#/lib/types";
 import { closePoll, exportPollCsv, getPoll, publishPoll } from "#/services/poll";
@@ -166,8 +167,11 @@ function AnalyticsPage() {
         }
       />
 
-      <main className="max-w-2xl mx-auto px-4 py-8 animate-slide-up">
-        {/* Title + share link */}
+      <main className="max-w-5xl mx-auto px-4 py-8 animate-slide-up">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] xl:grid-cols-[1fr_300px] gap-8 items-start">
+          {/* Main Analytics Column */}
+          <div className="min-w-0">
+            {/* Title + share link */}
         <div className="mb-6">
           <h1 className="text-[20px] font-bold text-ink-1 tracking-tight leading-snug mb-2.5">
             {data.title}
@@ -315,6 +319,17 @@ function AnalyticsPage() {
             {exportError}
           </p>
         )}
+      </div>
+
+      {/* Right Column: QR Code Card */}
+          <div className="lg:sticky lg:top-20">
+            <PollQRCodeCard
+              title={data.title}
+              shareUrl={shareUrl}
+              pollSlugOrId={data.slug ?? data.id}
+            />
+          </div>
+        </div>
       </main>
     </div>
   );
