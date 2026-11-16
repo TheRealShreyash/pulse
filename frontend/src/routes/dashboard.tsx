@@ -54,10 +54,16 @@ function PollRow({ poll }: { poll: Poll }) {
     setTimeout(() => setCopied(false), 1500);
   };
 
+  const targetUrl = poll.status === "DRAFT" ? "/create" : "/analytics/$pollId";
+
   return (
-    <div className="group relative flex items-center justify-between gap-4 px-4 py-3 rounded-xl border border-white/5 bg-bg-1/80 backdrop-blur-[1px] hover:border-white/15 hover:bg-bg-2/90 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] transition-all duration-200 ease-out hover:-translate-y-0.5">
-      {/* Left content */}
-      <div className="min-w-0 flex-1">
+    <div className="group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:px-4 sm:py-3 rounded-xl border border-white/5 bg-bg-1/80 backdrop-blur-[1px] hover:border-white/15 hover:bg-bg-2/90 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] transition-all duration-200 ease-out hover:-translate-y-0.5">
+      {/* Left content (clickable row) */}
+      <Link
+        to={targetUrl}
+        params={{ pollId: poll.id }}
+        className="min-w-0 flex-1 block focus:outline-none"
+      >
         <p className="text-[14px] font-medium text-ink-1 truncate group-hover:text-white transition-colors">
           {poll.title}
         </p>
@@ -76,109 +82,110 @@ function PollRow({ poll }: { poll: Poll }) {
             </span>
           )}
         </div>
-      </div>
+      </Link>
 
-      {/* Right actions */}
-      <div className="flex items-center gap-1 shrink-0">
-        {poll.isAnonymous && <Badge variant="ANON" />}
-        <Badge variant={poll.status as PollStatus} />
+      {/* Right actions and badges */}
+      <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/[0.04]">
+        <div className="flex items-center gap-1.5">
+          {poll.isAnonymous && <Badge variant="ANON" />}
+          <Badge variant={poll.status as PollStatus} />
+        </div>
 
-        {/* Copy link button */}
+        {/* Action buttons: Always visible on mobile, subtle on desktop hover */}
         {poll.status !== "DRAFT" && (
-          <button
-            onClick={handleCopyLink}
-            className="relative p-1.5 rounded-md text-ink-2 hover:text-green-400 hover:bg-white/5 transition-all duration-150 opacity-0 group-hover:opacity-100 focus:opacity-100"
-            aria-label="Copy poll link"
-          >
-            {copied ? (
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <div className="flex items-center gap-1 ml-1">
+            {/* Copy link button */}
+            <button
+              onClick={handleCopyLink}
+              className="p-1.5 rounded-md text-ink-2 hover:text-green-acc hover:bg-white/5 active:scale-95 transition-all opacity-90 sm:opacity-40 sm:group-hover:opacity-100 focus:opacity-100"
+              aria-label="Copy poll link"
+              title={copied ? "Copied!" : "Copy link"}
+            >
+              {copied ? (
+                <svg width="15" height="15" viewBox="0 0 14 14" fill="none" className="text-green-acc">
+                  <path
+                    d="M2 7L5 10L12 3"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+                  <rect
+                    x="3"
+                    y="2"
+                    width="8"
+                    height="4"
+                    rx="1"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                    fill="none"
+                  />
+                  <path
+                    d="M4 6h6v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6z"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                    fill="none"
+                  />
+                </svg>
+              )}
+            </button>
+
+            {/* Analytics button */}
+            <Link
+              to="/analytics/$pollId"
+              params={{ pollId: poll.id }}
+              className="p-1.5 rounded-md text-ink-2 hover:text-white hover:bg-white/5 active:scale-95 transition-all opacity-90 sm:opacity-40 sm:group-hover:opacity-100 focus:opacity-100"
+              aria-label="View analytics"
+              title="View analytics"
+            >
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <rect
+                  x="1"
+                  y="8"
+                  width="3"
+                  height="6"
+                  rx="1"
+                  fill="currentColor"
+                />
+                <rect
+                  x="6"
+                  y="5"
+                  width="3"
+                  height="9"
+                  rx="1"
+                  fill="currentColor"
+                />
+                <rect
+                  x="11"
+                  y="2"
+                  width="3"
+                  height="12"
+                  rx="1"
+                  fill="currentColor"
+                />
+              </svg>
+            </Link>
+
+            {/* View live poll button */}
+            <Link
+              to="/poll/$pollId"
+              params={{ pollId: poll.id }}
+              className="p-1.5 rounded-md text-ink-2 hover:text-white hover:bg-white/5 active:scale-95 transition-all opacity-90 sm:opacity-40 sm:group-hover:opacity-100 focus:opacity-100"
+              aria-label="Open poll"
+              title="Open poll"
+            >
+              <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
                 <path
-                  d="M2 7L5 10L12 3"
+                  d="M6 2H2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V8M9 1h4m0 0v4m0-4L6 8"
                   stroke="currentColor"
-                  strokeWidth="1.5"
+                  strokeWidth="1.2"
                   strokeLinecap="round"
                 />
               </svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <rect
-                  x="3"
-                  y="2"
-                  width="8"
-                  height="4"
-                  rx="1"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                  fill="none"
-                />
-                <path
-                  d="M4 6h6v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6z"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                  fill="none"
-                />
-              </svg>
-            )}
-            <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              {copied ? "Copied!" : "Copy link"}
-            </span>
-          </button>
-        )}
-
-        {/* Analytics icon */}
-        {poll.status !== "DRAFT" && (
-          <Link
-            to="/analytics/$pollId"
-            params={{ pollId: poll.id }}
-            className="p-1.5 rounded-md text-ink-2 hover:text-white hover:bg-white/5 transition-all duration-150 opacity-0 group-hover:opacity-100"
-            aria-label="Analytics"
-          >
-            <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
-              <rect
-                x="1"
-                y="8"
-                width="3"
-                height="6"
-                rx="1"
-                fill="currentColor"
-              />
-              <rect
-                x="6"
-                y="5"
-                width="3"
-                height="9"
-                rx="1"
-                fill="currentColor"
-              />
-              <rect
-                x="11"
-                y="2"
-                width="3"
-                height="12"
-                rx="1"
-                fill="currentColor"
-              />
-            </svg>
-          </Link>
-        )}
-
-        {/* View poll link */}
-        {poll.status !== "DRAFT" && (
-          <Link
-            to="/poll/$pollId"
-            params={{ pollId: poll.id }}
-            className="p-1.5 rounded-md text-ink-2 hover:text-white hover:bg-white/5 transition-all duration-150 opacity-0 group-hover:opacity-100"
-            aria-label="View poll"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M6 2H2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V8M9 1h4m0 0v4m0-4L6 8"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </Link>
+            </Link>
+          </div>
         )}
       </div>
     </div>

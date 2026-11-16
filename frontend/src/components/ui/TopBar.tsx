@@ -103,14 +103,14 @@ function ProfileMenu({ user }: { user: AuthUser }) {
 
 export function TopBar({ backTo, title, right, user, liveCount }: TopBarProps) {
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between h-11 px-5 bg-bg-0/85 backdrop-blur-md border-b border-white/[0.07] shadow-[0_1px_0_rgba(74,222,128,0.06)]">
+    <header className="sticky top-0 z-20 flex items-center justify-between h-11 px-4 sm:px-5 bg-bg-0/85 backdrop-blur-md border-b border-white/[0.07] shadow-[0_1px_0_rgba(74,222,128,0.06)]">
       {/* Left */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2.5 min-w-0">
         {backTo && (
           <Link
             to={backTo}
             aria-label="Back"
-            className="text-ink-2 hover:text-green-acc transition-colors"
+            className="text-ink-2 hover:text-green-acc transition-colors shrink-0"
           >
             <svg
               width="16"
@@ -130,13 +130,13 @@ export function TopBar({ backTo, title, right, user, liveCount }: TopBarProps) {
           </Link>
         )}
         {title ? (
-          <span className="text-[14px] font-semibold text-ink-1 tracking-tight">
+          <span className="text-[14px] font-semibold text-ink-1 tracking-tight truncate max-w-[160px] sm:max-w-xs">
             {title}
           </span>
         ) : (
           <Link
             to="/"
-            className="flex items-center gap-2 text-[14px] font-semibold text-ink-1 tracking-tight hover:text-green-acc transition-colors"
+            className="flex items-center gap-2 text-[14px] font-semibold text-ink-1 tracking-tight hover:text-green-acc transition-colors shrink-0"
           >
             <img
               src="/favicon.png"

@@ -60,11 +60,11 @@ function peakVelocity(
 
 function StatCard({ value, label }: { value: string; label: string }) {
   return (
-    <div className="bg-bg-2 border border-white/6 rounded-lg px-3 py-2.5 hover-lift hover:border-green-bar/20">
-      <p className="text-[22px] font-bold font-mono text-ink-1 tabular-nums">
+    <div className="bg-bg-2 border border-white/6 rounded-lg p-2.5 sm:px-3 sm:py-2.5 hover-lift hover:border-green-bar/20 min-w-0">
+      <p className="text-[17px] sm:text-[22px] font-bold font-mono text-ink-1 tabular-nums truncate">
         {value}
       </p>
-      <p className="text-[10px] font-mono text-ink-2 mt-0.5 uppercase tracking-wide">
+      <p className="text-[9px] sm:text-[10px] font-mono text-ink-2 mt-0.5 uppercase tracking-wide truncate">
         {label}
       </p>
     </div>
@@ -173,16 +173,16 @@ function AnalyticsPage() {
           <div className="min-w-0">
             {/* Title + share link */}
         <div className="mb-6">
-          <h1 className="text-[20px] font-bold text-ink-1 tracking-tight leading-snug mb-2.5">
+          <h1 className="text-[18px] sm:text-[20px] font-bold text-ink-1 tracking-tight leading-snug mb-2.5">
             {data.title}
           </h1>
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-            <span className="text-[11px] font-mono text-ink-3 bg-bg-2 border border-white/6 rounded-md px-2 py-1">
+            <span className="text-[11px] font-mono text-ink-3 bg-bg-2 border border-white/6 rounded-md px-2 py-1 max-w-full truncate">
               {shareUrl}
             </span>
             <button
               onClick={handleCopy}
-              className="text-[11px] font-mono text-green-acc hover:text-green-bar transition-colors"
+              className="text-[11px] font-mono text-green-acc hover:text-green-bar transition-colors shrink-0"
             >
               {copied ? "Copied!" : "Copy link"}
             </button>
@@ -251,8 +251,8 @@ function AnalyticsPage() {
         </section>
 
         {/* Actions footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-white/[0.07]">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-white/[0.07]">
+          <div className="flex flex-wrap items-center gap-2">
             {isActive && (
               <Button
                 variant="ghost"
@@ -273,7 +273,7 @@ function AnalyticsPage() {
             </Button>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between sm:justify-end gap-4">
             {isActive && (
               <span className="text-[11px] font-mono text-ink-3 flex items-center gap-1.5">
                 <LiveDot />
@@ -286,6 +286,7 @@ function AnalyticsPage() {
                 variant="accent"
                 onClick={handlePublish}
                 disabled={publishing}
+                className="w-full sm:w-auto justify-center"
               >
                 {publishing ? "Publishing…" : "Publish results"}
               </Button>
