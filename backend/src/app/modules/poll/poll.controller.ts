@@ -3,6 +3,7 @@ import { ApiError, ApiResponse } from "../../common/utils";
 import {
   closePoll,
   createPoll,
+  deletePoll,
   exportPollCsv,
   getPoll,
   getUserPolls,
@@ -115,6 +116,18 @@ export default class PollController {
         `attachment; filename="${filename}.csv"`,
       );
       res.send(toCsv(rows));
+    } catch (error) {
+      ApiResponse.error(res, error);
+    }
+  }
+
+  static async handleDeletePoll(req: AuthenticatedRequest, res: Response) {
+    try {
+      const pollIdOrSlug = req.query.id as string;
+      const creatorid = req.user.sub;
+
+      const deleted = await deletePoll(pollIdOrSlug, creatorid);
+      ApiResponse.ok(res, "Deleted Poll", { deleted: deleted });
     } catch (error) {
       ApiResponse.error(res, error);
     }

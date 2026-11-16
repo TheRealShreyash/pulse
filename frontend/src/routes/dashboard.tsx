@@ -1,11 +1,15 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
+import { useState, useRef, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { TopBar } from "../components/ui/TopBar";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
+import SwipeRow from "../components/ui/SwipeRow";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Archive02Icon, Delete02Icon } from "@hugeicons/core-free-icons";
 import type { Poll, PollStatus } from "#/lib/types";
 import { getMe } from "#/services/auth";
-import { getUserPolls } from "#/services/poll";
+import { getUserPolls, deletePoll } from "#/services/poll";
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: async () => {
@@ -41,8 +45,78 @@ function metaLine(p: Poll): string {
   return parts.join(" · ");
 }
 
+function ActionTooltip({
+  text,
+  show,
+  children,
+}: {
+  text: string;
+  show?: boolean;
+  children: React.ReactNode;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+  const isVisible = Boolean(show || hovered);
+
+  const updateCoords = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.top - 6,
+        left: rect.left + rect.width / 2,
+      });
+    }
+  };
+
+  const handleMouseEnter = () => {
+    updateCoords();
+    setHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setHovered(false);
+  };
+
+  useLayoutEffect(() => {
+    if (isVisible) {
+      updateCoords();
+    }
+  }, [isVisible, text]);
+
+  return (
+    <div
+      ref={triggerRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="relative inline-flex items-center justify-center cursor-pointer"
+    >
+      {children}
+      {isVisible &&
+        coords &&
+        createPortal(
+          <div
+            style={{
+              position: "fixed",
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              transform: "translate(-50%, -100%)",
+              zIndex: 99999,
+            }}
+            className="pointer-events-none bg-neutral-900/95 border border-white/15 text-white text-[10px] font-mono px-2 py-0.5 rounded shadow-2xl whitespace-nowrap animate-fade-in"
+          >
+            {text}
+          </div>,
+          document.body,
+        )}
+    </div>
+  );
+}
+
 function PollRow({ poll }: { poll: Poll }) {
   const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
 
   const handleCopyLink = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -54,23 +128,33 @@ function PollRow({ poll }: { poll: Poll }) {
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const targetUrl = poll.status === "DRAFT" ? "/create" : "/analytics/$pollId";
+  const handleCardClick = () => {
+    if (poll.status === "DRAFT") {
+      navigate({ to: "/create" });
+    } else {
+      navigate({
+        to: "/analytics/$pollId",
+        params: { pollId: poll.id },
+      });
+    }
+  };
 
   return (
-    <div className="group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:px-4 sm:py-3 rounded-xl border border-white/5 bg-bg-1/80 backdrop-blur-[1px] hover:border-white/15 hover:bg-bg-2/90 hover:shadow-[0_4px_12px_rgba(0,0,0,0.3)] transition-all duration-200 ease-out hover:-translate-y-0.5">
-      {/* Left content (clickable row) */}
-      <Link
-        to={targetUrl}
-        params={{ pollId: poll.id }}
-        className="min-w-0 flex-1 block focus:outline-none"
+    <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-4 py-2 sm:py-0 min-w-0 select-none cursor-grab active:cursor-grabbing">
+      {/* Top tier on mobile / left on desktop: Title + Meta (Draggable from anywhere) */}
+      <div
+        onClick={handleCardClick}
+        className="min-w-0 flex-1 block focus:outline-none select-none cursor-grab active:cursor-grabbing"
       >
-        <p className="text-[14px] font-medium text-ink-1 truncate group-hover:text-white transition-colors">
+        <p className="text-[14px] font-medium text-ink-1 truncate hover:text-white transition-colors">
           {poll.title}
         </p>
         <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-0.5 text-[11px]">
-          <span className="text-ink-2">{metaLine(poll)}</span>
+          <span className="text-ink-2 truncate max-w-full">
+            {metaLine(poll)}
+          </span>
           {poll.totalResponses! > 0 && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/10 text-[10px] font-mono text-ink-2">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/10 text-[10px] font-mono text-ink-2 shrink-0">
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                 <path
                   d="M6 1v10M1 6h10"
@@ -82,109 +166,126 @@ function PollRow({ poll }: { poll: Poll }) {
             </span>
           )}
         </div>
-      </Link>
+      </div>
 
-      {/* Right actions and badges */}
-      <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/[0.04]">
+      {/* Bottom tier on mobile / right on desktop: Badges & Quick Action Icons */}
+      <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-white/[0.04]">
         <div className="flex items-center gap-1.5">
           {poll.isAnonymous && <Badge variant="ANON" />}
           <Badge variant={poll.status as PollStatus} />
         </div>
 
-        {/* Action buttons: Always visible on mobile, subtle on desktop hover */}
+        {/* Quick Action buttons */}
         {poll.status !== "DRAFT" && (
-          <div className="flex items-center gap-1 ml-1">
+          <div
+            className="flex items-center gap-1 ml-1"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
             {/* Copy link button */}
-            <button
-              onClick={handleCopyLink}
-              className="p-1.5 rounded-md text-ink-2 hover:text-green-acc hover:bg-white/5 active:scale-95 transition-all opacity-90 sm:opacity-40 sm:group-hover:opacity-100 focus:opacity-100"
-              aria-label="Copy poll link"
-              title={copied ? "Copied!" : "Copy link"}
-            >
-              {copied ? (
-                <svg width="15" height="15" viewBox="0 0 14 14" fill="none" className="text-green-acc">
+            <ActionTooltip text={copied ? "Copied!" : "Copy link"} show={copied}>
+              <button
+                onClick={handleCopyLink}
+                className="p-1.5 rounded-md text-ink-2 hover:text-green-acc hover:bg-white/5 active:scale-95 transition-all opacity-80 sm:opacity-50 hover:opacity-100"
+                aria-label="Copy poll link"
+              >
+                {copied ? (
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    className="text-green-acc"
+                  >
+                    <path
+                      d="M2 7L5 10L12 3"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                ) : (
+                  <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
+                    <rect
+                      x="3"
+                      y="2"
+                      width="8"
+                      height="4"
+                      rx="1"
+                      stroke="currentColor"
+                      strokeWidth="1.2"
+                      fill="none"
+                    />
+                    <path
+                      d="M4 6h6v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6z"
+                      stroke="currentColor"
+                      strokeWidth="1.2"
+                      fill="none"
+                    />
+                  </svg>
+                )}
+              </button>
+            </ActionTooltip>
+
+            {/* Analytics button */}
+            <ActionTooltip text="Analytics">
+              <Link
+                to="/analytics/$pollId"
+                params={{ pollId: poll.id }}
+                draggable={false}
+                onDragStart={(e) => e.preventDefault()}
+                className="p-1.5 rounded-md text-ink-2 hover:text-white hover:bg-white/5 active:scale-95 transition-all opacity-80 sm:opacity-50 hover:opacity-100 block"
+                aria-label="View analytics"
+              >
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                  <rect
+                    x="1"
+                    y="8"
+                    width="3"
+                    height="6"
+                    rx="1"
+                    fill="currentColor"
+                  />
+                  <rect
+                    x="6"
+                    y="5"
+                    width="3"
+                    height="9"
+                    rx="1"
+                    fill="currentColor"
+                  />
+                  <rect
+                    x="11"
+                    y="2"
+                    width="3"
+                    height="12"
+                    rx="1"
+                    fill="currentColor"
+                  />
+                </svg>
+              </Link>
+            </ActionTooltip>
+
+            {/* View live poll button */}
+            <ActionTooltip text="View poll">
+              <Link
+                to="/poll/$pollId"
+                params={{ pollId: poll.id }}
+                draggable={false}
+                onDragStart={(e) => e.preventDefault()}
+                className="p-1.5 rounded-md text-ink-2 hover:text-white hover:bg-white/5 active:scale-95 transition-all opacity-80 sm:opacity-50 hover:opacity-100 block"
+                aria-label="Open poll"
+              >
+                <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
                   <path
-                    d="M2 7L5 10L12 3"
+                    d="M6 2H2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V8M9 1h4m0 0v4m0-4L6 8"
                     stroke="currentColor"
-                    strokeWidth="1.5"
+                    strokeWidth="1.2"
                     strokeLinecap="round"
                   />
                 </svg>
-              ) : (
-                <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-                  <rect
-                    x="3"
-                    y="2"
-                    width="8"
-                    height="4"
-                    rx="1"
-                    stroke="currentColor"
-                    strokeWidth="1.2"
-                    fill="none"
-                  />
-                  <path
-                    d="M4 6h6v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6z"
-                    stroke="currentColor"
-                    strokeWidth="1.2"
-                    fill="none"
-                  />
-                </svg>
-              )}
-            </button>
-
-            {/* Analytics button */}
-            <Link
-              to="/analytics/$pollId"
-              params={{ pollId: poll.id }}
-              className="p-1.5 rounded-md text-ink-2 hover:text-white hover:bg-white/5 active:scale-95 transition-all opacity-90 sm:opacity-40 sm:group-hover:opacity-100 focus:opacity-100"
-              aria-label="View analytics"
-              title="View analytics"
-            >
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <rect
-                  x="1"
-                  y="8"
-                  width="3"
-                  height="6"
-                  rx="1"
-                  fill="currentColor"
-                />
-                <rect
-                  x="6"
-                  y="5"
-                  width="3"
-                  height="9"
-                  rx="1"
-                  fill="currentColor"
-                />
-                <rect
-                  x="11"
-                  y="2"
-                  width="3"
-                  height="12"
-                  rx="1"
-                  fill="currentColor"
-                />
-              </svg>
-            </Link>
-
-            {/* View live poll button */}
-            <Link
-              to="/poll/$pollId"
-              params={{ pollId: poll.id }}
-              className="p-1.5 rounded-md text-ink-2 hover:text-white hover:bg-white/5 active:scale-95 transition-all opacity-90 sm:opacity-40 sm:group-hover:opacity-100 focus:opacity-100"
-              aria-label="Open poll"
-              title="Open poll"
-            >
-              <svg width="15" height="15" viewBox="0 0 14 14" fill="none">
-                <path
-                  d="M6 2H2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V8M9 1h4m0 0v4m0-4L6 8"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </Link>
+              </Link>
+            </ActionTooltip>
           </div>
         )}
       </div>
@@ -194,7 +295,27 @@ function PollRow({ poll }: { poll: Poll }) {
 
 function Dashboard() {
   const { polls, userData } = Route.useLoaderData();
-  const liveCount = polls.filter((p) => p.status === "LIVE").length;
+  const [pollsList, setPollsList] = useState<Poll[]>(polls);
+  const [toast, setToast] = useState<string | null>(null);
+  const liveCount = pollsList.filter((p) => p.status === "LIVE").length;
+
+  const handleRemovePoll = async (pollId: string) => {
+    try {
+      await deletePoll(pollId);
+      setPollsList((prev) => prev.filter((p) => p.id !== pollId));
+    } catch (err) {
+      console.error("Failed to delete poll", err);
+    }
+  };
+
+  const handleAction = async (pollId: string, actionId: string) => {
+    if (actionId === "delete") {
+      await handleRemovePoll(pollId);
+    } else if (actionId === "archive") {
+      setToast("Archiving coming soon!");
+      setTimeout(() => setToast(null), 2500);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-bg-0 bg-grid relative overflow-x-hidden">
@@ -247,11 +368,11 @@ function Dashboard() {
             )}
           </div>
           <p className="text-[11px] font-mono text-ink-2 tabular-nums">
-            {polls.length} total
+            {pollsList.length} total
           </p>
         </div>
 
-        {polls.length === 0 ? (
+        {pollsList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-4 animate-fade-in-up">
             <div className="w-16 h-16 rounded-full bg-linear-to-br from-green-dim to-transparent border border-green-bar/15 flex items-center justify-center shadow-[0_0_30px_rgba(74,222,128,0.08)]">
               <svg
@@ -282,15 +403,46 @@ function Dashboard() {
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">
-            {polls.map((p, i) => (
-              <div
+            {pollsList.map((p) => (
+              <SwipeRow
                 key={p.id}
-                className="animate-fade-in-up"
-                style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+                actions={[
+                  {
+                    id: "delete",
+                    label: "Delete",
+                    icon: <HugeiconsIcon icon={Delete02Icon} size={20} />,
+                  },
+                  {
+                    id: "archive",
+                    label: "Archive",
+                    icon: <HugeiconsIcon icon={Archive02Icon} size={20} />,
+                  },
+                ]}
+                onAction={(action) => handleAction(p.id, action.id)}
+                onCommit={() => handleRemovePoll(p.id)}
+                actionColor="#dc2626"
+                drawerColor="#272727"
+                rowColor="#161616"
+                textColor="#e8e8e6"
+                radius={12}
+                actionWidth={80}
+                direction="left"
+                snapBounce={0.2}
+                resistance={0.55}
+                collapseMs={240}
+                commitAt={0.6}
+                fullSwipe
+                className="border border-white/5 hover:border-white/15 transition-colors shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
               >
                 <PollRow poll={p} />
-              </div>
+              </SwipeRow>
             ))}
+          </div>
+        )}
+
+        {toast && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-bg-2 border border-white/10 text-[12px] font-mono text-ink-1 shadow-2xl animate-slide-up">
+            {toast}
           </div>
         )}
       </main>

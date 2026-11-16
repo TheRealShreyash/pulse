@@ -199,7 +199,10 @@ export const getUserPolls = async (creatorId: string) => {
 // Aggregate summary only (option, votes, percentage) — deliberately not
 // per-vote rows. A per-vote export is really the individual-response-
 // viewing feature in CSV form, which needs its own privacy pass first.
-export const exportPollCsv = async (pollIdOrSlug: string, creatorId: string) => {
+export const exportPollCsv = async (
+  pollIdOrSlug: string,
+  creatorId: string,
+) => {
   if (!pollIdOrSlug) throw ApiError.badRequest("No poll id provided");
 
   const poll = await resolvePoll(pollIdOrSlug);
@@ -373,4 +376,13 @@ export const hasVoted = async (
     .limit(1);
 
   return !!vote;
+};
+
+export const deletePoll = async (pollIdOrSlug: string, creatorId: string) => {
+  const poll = await resolvePoll(pollIdOrSlug);
+  if (!poll) throw ApiError.notFound("Poll not found");
+  if (poll.creatorId !== creatorId) throw ApiError.forbidden("Not Authorized");
+
+  await db.delete(pollsTable).where(eq(pollsTable.id, poll.id));
+  return true;
 };

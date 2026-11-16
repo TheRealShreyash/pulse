@@ -23,11 +23,7 @@ pollRouter.post(
   PollController.handleCreatePoll,
 );
 
-pollRouter.get(
-  "/poll",
-  pollAuthenticate(),
-  PollController.handleGetPoll,
-);
+pollRouter.get("/poll", pollAuthenticate(), PollController.handleGetPoll);
 
 pollRouter.get(
   "/user-polls",
@@ -58,13 +54,20 @@ pollRouter.post(
   PollController.handleRespond,
 );
 
-pollRouter.get('/has-voted', pollAuthenticate(), PollController.handleHasVoted)
+pollRouter.get("/has-voted", pollAuthenticate(), PollController.handleHasVoted);
 
 pollRouter.get(
   "/export",
   authenticate(),
   restrictToAuthenticatedUser(),
   PollController.handleExportCsv,
+);
+
+pollRouter.delete(
+  "/delete",
+  authenticate(),
+  restrictToAuthenticatedUser(),
+  PollController.handleDeletePoll,
 );
 
 export default pollRouter;

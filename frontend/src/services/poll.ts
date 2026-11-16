@@ -35,6 +35,15 @@ export const createPoll = async (payload: CreatePollPayload): Promise<Poll> => {
   return data;
 };
 
+export const deletePoll = async (pollId: string): Promise<void> => {
+  const res = await fetch(`/api/poll/delete?id=${pollId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!res.ok) throw new Error("Failed to delete");
+};
+
 export const getPoll = async (pollId: string) => {
   const response = await fetch(`/api/poll/poll?id=${pollId}`, {
     method: "GET",
