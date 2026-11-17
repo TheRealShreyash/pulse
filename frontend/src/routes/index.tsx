@@ -1,22 +1,28 @@
 import { useEffect, useRef } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-// import { authenticate } from "#/services/auth";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { authenticate } from "#/services/auth";
 
 export const Route = createFileRoute("/")({
-  // beforeLoad: async () => {
-  //   const isAuthenticated = await authenticate();
-  //   if (isAuthenticated) {
-  //     throw redirect({
-  //       to: "/dashboard",
-  //       replace: true,
-  //       search: {},
-  //     });
-  //   }
-  // },
+  beforeLoad: async () => {
+    const isAuthenticated = await authenticate();
+    if (isAuthenticated) {
+      throw redirect({
+        to: "/dashboard",
+        replace: true,
+        search: {},
+      });
+    }
+  },
+  loader: async () => {
+    const isAuthenticated = await authenticate();
+    return { isAuthenticated };
+  },
   component: LandingPage,
 });
 
 function LandingPage() {
+  const loaderData = Route.useLoaderData();
+  const isAuthenticated = loaderData?.isAuthenticated ?? false;
   const barsRef = useRef<(HTMLDivElement | null)[]>([]);
   const voteCounterRef = useRef<HTMLSpanElement>(null);
   const miniBarsRef = useRef<HTMLDivElement>(null);
@@ -1048,9 +1054,15 @@ function LandingPage() {
             <a href="#usecases">Use cases</a>
           </li>
           <li>
-            <Link to="/login" className="nav-cta">
-              Sign in →
-            </Link>
+            {isAuthenticated ? (
+              <Link to="/dashboard" className="nav-cta">
+                Dashboard →
+              </Link>
+            ) : (
+              <Link to="/login" className="nav-cta">
+                Sign in →
+              </Link>
+            )}
           </li>
         </ul>
         <button className="hamburger" id="hamburger" aria-label="Menu">
@@ -1064,9 +1076,15 @@ function LandingPage() {
         <a href="#features">Features</a>
         <a href="#how">How it works</a>
         <a href="#usecases">Use cases</a>
-        <Link to="/login" style={{ color: "var(--green-acc)" }}>
-          Sign in →
-        </Link>
+        {isAuthenticated ? (
+          <Link to="/dashboard" style={{ color: "var(--green-acc)" }}>
+            Dashboard →
+          </Link>
+        ) : (
+          <Link to="/login" style={{ color: "var(--green-acc)" }}>
+            Sign in →
+          </Link>
+        )}
       </div>
 
       {/* Hero */}
@@ -1087,17 +1105,23 @@ function LandingPage() {
           required.
         </p>
         <div className="hero-actions">
-          <Link to="/signup" className="btn-primary">
-            <svg width="13" height="13" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M6 1v10M1 6h10"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-            </svg>
-            Create a poll
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/dashboard" className="btn-primary">
+              Go to Dashboard →
+            </Link>
+          ) : (
+            <Link to="/signup" className="btn-primary">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M6 1v10M1 6h10"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+              Create a poll
+            </Link>
+          )}
           <a href="#how" className="btn-ghost">
             {" "}
             See how it works{" "}
@@ -1561,42 +1585,54 @@ function LandingPage() {
             question and a link.
           </p>
           <div className="cta-glow">
-            <Link
-              to="/signup"
-              className="btn-primary"
-              style={{ fontSize: "14px", padding: "14px 32px" }}
-            >
-              <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
-                <path
-                  d="M6 1v10M1 6h10"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                />
-              </svg>
-              Create your first poll
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                to="/dashboard"
+                className="btn-primary"
+                style={{ fontSize: "14px", padding: "14px 32px" }}
+              >
+                Go to your dashboard →
+              </Link>
+            ) : (
+              <Link
+                to="/signup"
+                className="btn-primary"
+                style={{ fontSize: "14px", padding: "14px 32px" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
+                  <path
+                    d="M6 1v10M1 6h10"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                Create your first poll
+              </Link>
+            )}
           </div>
-          <p
-            style={{
-              fontFamily: "DM Mono, monospace",
-              fontSize: "11px",
-              color: "var(--ink-3)",
-              marginTop: "20px",
-            }}
-          >
-            Already have an account?{" "}
-            <Link
-              to="/login"
+          {!isAuthenticated && (
+            <p
               style={{
-                color: "var(--ink-2)",
-                textDecoration: "underline",
-                textUnderlineOffset: "3px",
+                fontFamily: "DM Mono, monospace",
+                fontSize: "11px",
+                color: "var(--ink-3)",
+                marginTop: "20px",
               }}
             >
-              Sign in
-            </Link>
-          </p>
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                style={{
+                  color: "var(--ink-2)",
+                  textDecoration: "underline",
+                  textUnderlineOffset: "3px",
+                }}
+              >
+                Sign in
+              </Link>
+            </p>
+          )}
         </div>
       </section>
 

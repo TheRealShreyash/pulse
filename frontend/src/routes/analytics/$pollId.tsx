@@ -7,6 +7,7 @@ import { LiveDot } from "../../components/poll/LiveDot";
 import { AnalyticsBar } from "../../components/poll/AnalyticsBar";
 import { Sparkline } from "../../components/poll/Sparkline";
 import { PollQRCodeCard } from "../../components/poll/PollQRCodeCard";
+import CountUp from "../../components/ui/CountUp";
 import { usePollSocket } from "#/hooks/usePollSocket";
 import { type AnalyticsPoll } from "#/lib/types";
 import { closePoll, exportPollCsv, getPoll, publishPoll } from "#/services/poll";
@@ -58,7 +59,7 @@ function peakVelocity(
   return velocity.reduce((max, v) => (v.count > max.count ? v : max));
 }
 
-function StatCard({ value, label }: { value: string; label: string }) {
+function StatCard({ value, label }: { value: React.ReactNode; label: string }) {
   return (
     <div className="bg-bg-2 border border-white/6 rounded-lg p-2.5 sm:px-3 sm:py-2.5 hover-lift hover:border-green-bar/20 min-w-0">
       <p className="text-[17px] sm:text-[22px] font-bold font-mono text-ink-1 tabular-nums truncate">
@@ -189,8 +190,13 @@ function AnalyticsPage() {
             {data.isAnonymous && (
               <span className="text-[11px] font-mono text-ink-3">
                 · Anonymous
-                {data.totalResponses > 0 &&
-                  ` · ${authPct}% signed in, ${100 - authPct}% anonymous`}
+                {data.totalResponses > 0 && (
+                  <>
+                    {" · "}
+                    <CountUp to={authPct} suffix="%" duration={0.8} /> signed in,{" "}
+                    <CountUp to={100 - authPct} suffix="%" duration={0.8} /> anonymous
+                  </>
+                )}
               </span>
             )}
             {isActive && data.expiresAt && (
@@ -203,8 +209,20 @@ function AnalyticsPage() {
 
         {/* Stat cards */}
         <div className="grid grid-cols-3 gap-2.5 mb-7">
-          <StatCard value={String(data.totalResponses)} label="Responses" />
-          <StatCard value={`${pcts[leadingIdx]}%`} label="Top option" />
+          <StatCard
+            value={<CountUp to={data.totalResponses} duration={0.8} />}
+            label="Responses"
+          />
+          <StatCard
+            value={
+              pcts[leadingIdx] !== undefined ? (
+                <CountUp to={pcts[leadingIdx]} suffix="%" duration={0.8} />
+              ) : (
+                "0%"
+              )
+            }
+            label="Top option"
+          />
           <StatCard
             value={
               isActive && data.expiresAt

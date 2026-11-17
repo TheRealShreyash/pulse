@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
+import CountUp from "#/components/ui/CountUp";
 import { toPng } from "html-to-image";
 import { TopBar } from "#/components/ui/TopBar";
 import { Badge } from "#/components/ui/Badge";
@@ -129,7 +130,7 @@ function PollPage() {
             {poll.title}
           </h1>
           <p className="text-[11px] font-mono text-ink-3 mb-7 tabular-nums">
-            {poll.totalResponses} responses ·{" "}
+            <CountUp to={poll.totalResponses} duration={0.8} /> responses ·{" "}
             {poll.isAnonymous ? "Anonymous" : "Authenticated"}
           </p>
 
@@ -141,7 +142,7 @@ function PollPage() {
               {poll.options[leadingIdx].text}
             </p>
             <p className="text-[11px] font-mono text-ink-2 mt-0.5 tabular-nums">
-              {poll.options[leadingIdx].count} votes · {pcts[leadingIdx]}%
+              <CountUp to={poll.options[leadingIdx].count} duration={0.8} /> votes · <CountUp to={pcts[leadingIdx]} suffix="%" duration={0.8} />
             </p>
           </div>
 
@@ -279,7 +280,7 @@ function PollPage() {
               </p>
             )}
             <p className="text-[12px] font-mono text-ink-3 tabular-nums">
-              {poll.totalResponses}{" "}
+              <CountUp to={poll.totalResponses} duration={0.5} trigger="load" />{" "}
               {poll.totalResponses === 1 ? "response" : "responses"}
             </p>
           </div>

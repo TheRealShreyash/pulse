@@ -3,6 +3,8 @@
 // Before voting  → clean tap target, no fill shown.
 // After voting   → animated fill bar + percentage appears.
 
+import CountUp from "../ui/CountUp";
+
 interface OptionBarProps {
   label: string
   pct: number
@@ -77,7 +79,7 @@ export function OptionBar({
           <span
             className={`text-[12px] font-mono font-medium tabular-nums ${isSelected ? 'text-green-acc' : 'text-ink-2'}`}
           >
-            {pct}%
+            <CountUp to={pct} suffix="%" duration={0.8} />
           </span>
         )}
       </span>

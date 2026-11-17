@@ -1,3 +1,5 @@
+import CountUp from "../ui/CountUp";
+
 interface AnalyticsBarProps {
   label: string;
   count: number;
@@ -18,7 +20,7 @@ export function AnalyticsBar({
           {label}
         </span>
         <span className="font-mono text-ink-1 font-medium tabular-nums">
-          {count} · {pct}%
+          <CountUp to={count} duration={0.8} /> · <CountUp to={pct} suffix="%" duration={0.8} />
         </span>
       </div>
       <div className="h-1.25 w-full rounded-full bg-bg-3 overflow-hidden">
