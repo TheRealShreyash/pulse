@@ -4,6 +4,7 @@ import { io } from "socket.io-client";
 export const socket = io(BACKEND_URL ?? "http://localhost:8080", {
   autoConnect: false,
   withCredentials: true, // sends the Iris session cookie
+  transports: ["websocket"], // skip HTTP polling — Vercel edge blocks it
 });
 
 export const EVENTS = {
